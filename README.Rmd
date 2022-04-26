@@ -2,7 +2,7 @@
 title: "README"
 author: "Erik Schulte"
 date: "26 4 2022"
-output: html_document
+output: github_document
 ---
 
 ## Purpose
@@ -13,7 +13,7 @@ The purpose of this README is to provide detailed explanation about my working f
 
 This is the host platform for my project...
 ```{r}
-fdsafdsa
+#fdsafdsa
 ```
 
 ## Code explanations
