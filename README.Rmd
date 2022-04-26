@@ -5,12 +5,9 @@ date: "26 4 2022"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ## Purpose
 
+The purpose of this README is to provide detailed explanation about my working flow, my approach and generally how I solved this project.
 .....
 
 
