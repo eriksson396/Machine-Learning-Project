@@ -37,7 +37,7 @@ vignettes/*.pdf
 *.knit.md
 
 # NEVER ever commit data files to github.
-data/y
+data/
 
 # R Environment Variables
 .Renviron
