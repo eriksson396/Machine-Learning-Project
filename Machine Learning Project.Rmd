@@ -66,10 +66,20 @@ library(magrittr)
 library(gdata)
 library(kableExtra)
 
-getwd()
+
+#load the UN Security Council Debates dataset
+load("data/dataset.RData")
+load("data/docs.RData")
+
+#set a seed for reproducability
+set.seed(2333)
+#data wrangling
+View(meta_meetings)
+View(meta_speeches)
 
 
-load("data/dataset_meta.RData")
+corpus <- (meta_speeches)
+Chinaspeeches <- subset.data.frame(corpus, country == "China") #only the speeches from China
 ```
 
 
