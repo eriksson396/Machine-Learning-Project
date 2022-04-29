@@ -1,0 +1,79 @@
+---
+title: "Codework"
+author: "Erik Schulte"
+date: "28 4 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+#load required packages
+if(!require("tidyverse")) install.packages("tidyverse")
+library(tidyverse)
+library(readtext)
+library(quanteda)
+library(quanteda.textplots)
+library(quanteda.textstats)
+library(ggplot2)
+library(magrittr)
+library(gdata)
+library(kableExtra)
+library(tidytext)
+
+
+#load the UN Security Council Debates dataset
+load("data/dataset.RData")
+load("data/docs.RData")
+
+#set a seed for reproducability
+set.seed(2333)
+#data wrangling
+View(meta_meetings)
+View(meta_speeches)
+
+corpus
+corpus <- (meta_speeches)
+ #only the speeches from China
+Chinaspeeches <- subset.data.frame(corpus, country == "China")
+##make country names small
+#meta_speeches <- corpus_subset(Chinaspeeches, tolower(country) %in% tolower(group_1))
+```
+
+```{r}
+##separates by default into words all speeches from raw docs (here by sentences)
+tidy_raw_sentences <- raw_docs %>%
+  unnest_tokens(sentences, text, token = "sentences" )  
+
+##separate into words
+tidy_raw_words <- raw_docs |> 
+    unnest_tokens(word, text)
+
+##remove redundant words (reduces from 47,6 Mio words to 21,4 Mio words)
+data(stop_words)  ##this comes with a package (a list of unuseful words)
+
+tidy_raw_words <- tidy_raw_words %>%
+  anti_join(stop_words)
+
+##count words, after redundant words were removed (only meaningful words)
+tidy_raw_words %>%
+  count(word, sort = TRUE)
+
+##plotting most common words (mit mehr als 80.000 Wörtern)
+library(ggplot2)
+
+tidy_raw_words %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 80000) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word)) +
+  geom_col() +
+  labs(y = NULL)
+```
+
+
+
+
