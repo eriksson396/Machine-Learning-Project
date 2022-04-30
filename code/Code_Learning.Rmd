@@ -23,6 +23,8 @@ library(magrittr)
 library(gdata)
 library(kableExtra)
 library(tidytext)
+library(corpus)
+library(tibble)
 
 
 #load the UN Security Council Debates dataset
@@ -32,24 +34,74 @@ load("data/docs.RData")
 #set a seed for reproducability
 set.seed(2333)
 #data wrangling
-View(meta_meetings)
-View(meta_speeches)
+#View(meta_meetings)
+#View(meta_speeches)
 
-corpus
-corpus <- (meta_speeches)
- #only the speeches from China
-Chinaspeeches <- subset.data.frame(corpus, country == "China")
-##make country names small
-#meta_speeches <- corpus_subset(Chinaspeeches, tolower(country) %in% tolower(group_1))
+##rename common column to merge the content of the speeches
+meta_speeches <- meta_speeches %>%
+  rename(doc_id = filename)
+## merge dataset raw with speeches
+#mutate(meta_speeches, text = raw_docs$text)
+#meta_speeches <- cbind(meta_speeches, raw_docs[c("text")])
+
+meta_speeches <- merge(meta_speeches, raw_docs, by = 'doc_id')
+
+#add_column(meta_speeches, raw_docs[c("text")], .after = "filename")
+
+
+#try to make it a corpus
+
+#as_corpus_frame(meta_speeches$text, filter = NULL, row.names = NULL)
+corp_meta_speeches <- corpus(meta_speeches, text_field = "text")
+print(corp_meta_speeches)
+
+summary(corp_meta_speeches, 3)
+
+#is_corpus_frame(corp_meta_speeches$text)
+#corpus
+#corpus <- (meta_speeches)
+
+#only the speeches from China/only corpus from CHina
+#How do I assign the speeches to the columns (now the speeches are in the same order as in the document, but not tied to the countries)
+
+corp_China <- corpus_subset(corp_meta_speeches, country == "China")
+Chinaspeeches <- subset.data.frame(meta_speeches, country == "China")
+
+##make country names small (something wrong)
+#chinaspeeches_lower <- corpus_subset(corp_meta_speeches, tolower(country) %in% tolower(corp_China))
+
+
+## access to document level variables
+head(docvars(corp_China))
+
+##extract them the document level variables
+docvars(corp_China, field = "speaker")
+
+corp_China$year
+
+##create new variables (does not work yet)
+corp_China$avg_speech_length <- (mean(corp_China$sentences))
+avg_speech_length
+
 ```
+
+######
+```{r}
+#create a textcloud
+library(tm)
+library(textcloud)
+
+corpus <- Corpus(VectorSource())
+```
+#######
 
 ```{r}
 ##separates by default into words all speeches from raw docs (here by sentences)
-tidy_raw_sentences <- raw_docs %>%
+tidy_raw_sentences <- meta_speeches %>%
   unnest_tokens(sentences, text, token = "sentences" )  
 
 ##separate into words
-tidy_raw_words <- raw_docs |> 
+tidy_raw_words <- meta_speeches |> 
     unnest_tokens(word, text)
 
 ##remove redundant words (reduces from 47,6 Mio words to 21,4 Mio words)
@@ -74,6 +126,58 @@ tidy_raw_words %>%
   labs(y = NULL)
 ```
 
+```{r same for China}
+##separates by default into words all speeches from raw docs (here by sentences)
+tidy_raw_sentences_CHN <- Chinaspeeches %>%
+  unnest_tokens(sentences, text, token = "sentences" )  
+
+#How do I assign the speeches to the columns (now the speeches are in the same order as in the document, but not tied to the countries)
+
+##separate into words
+tidy_raw_words_China <- Chinaspeeches |> 
+    unnest_tokens(word, text)
+
+##remove redundant words (reduces from 47,6 Mio words to 21,4 Mio words)
+data(stop_words)  ##this comes with a package (a list of unuseful words)
+
+tidy_raw_words_China <- tidy_raw_words_China %>%
+  anti_join(stop_words)
+
+##count words, after redundant words were removed (only meaningful words)
+tidy_raw_words_China %>%
+  count(word, sort = TRUE)
+
+##plotting most common wordsChina (mit mehr als 3.000 Wörtern)
+library(ggplot2)
+
+tidy_raw_words_China %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 3000) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word)) +
+  geom_col() +
+  labs(y = NULL)
+```
+# Gutenberg R
+
+```{r}
+##the same as above
+tidy_raw_words_China %>%
+  count(word, sort = TRUE)
+
+
+##calculate the frequency
+frequency <- bind_rows(mutate(tidy_raw_words$word),
+                       mutate(tidy_raw_words_China$word)) %>% 
+  #mutate(word = str_extract(word, "[a-z']+")) %>%
+  count(word, sort = TRUE) %>%
+  #group_by(author) %>%
+  mutate(proportion = n / sum(n)) %>% 
+  select(-n) %>% 
+  #pivot_wider(names_from = author, values_from = proportion) %>%
+ # pivot_longer(`Brontë Sisters`:`H.G. Wells`,
+   #            names_to = "author", values_to = "proportion")
+```
 
 
 
