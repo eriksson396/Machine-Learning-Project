@@ -80,8 +80,8 @@ docvars(corp_China, field = "speaker")
 corp_China$year
 
 ##create new variables (does not work yet)
-corp_China$avg_speech_length <- (mean(corp_China$sentences))
-avg_speech_length
+#corp_China$avg_speech_length <- (mean(corp_China$sentences))
+#avg_speech_length
 
 ```
 
@@ -161,23 +161,88 @@ tidy_raw_words_China %>%
 # Gutenberg R
 
 ```{r}
-##the same as above
-tidy_raw_words_China %>%
-  count(word, sort = TRUE)
+#calculate the frequency of terms that appear in each speech. It also creates a document feature matrix.
 
 
-##calculate the frequency
-frequency <- bind_rows(mutate(tidy_raw_words$word),
-                       mutate(tidy_raw_words_China$word)) %>% 
-  #mutate(word = str_extract(word, "[a-z']+")) %>%
-  count(word, sort = TRUE) %>%
-  #group_by(author) %>%
-  mutate(proportion = n / sum(n)) %>% 
-  select(-n) %>% 
-  #pivot_wider(names_from = author, values_from = proportion) %>%
- # pivot_longer(`Brontë Sisters`:`H.G. Wells`,
-   #            names_to = "author", values_to = "proportion")
+get_freqs <- function(corp_meta_speeches, weighting = TRUE){
+tokens <- tokens(corp_meta_speeches, remove_punct = T, remove_separators = T, include_docvars = T)
+tokens <- tokens_remove(tokens, stopwords("en"))
+dfm <- tokens %>% dfm()
+freqs <- textstat_frequency(dfm)
+
+if(weighting == TRUE){
+freqs$term_frequency <- freqs$frequency / sum(freqs$frequency)
+freqs$inverse_doc_freq <- log10( length(corp_meta_speeches) / freqs$docfreq )
+freqs$frequency <- freqs$term_frequency*freqs$inverse_doc_freq
+}
+return(freqs)
+
+}
+
+
+freqs_CHN <- get_freqs(corp_China,weighting=TRUE)
+freqs_all <- get_freqs(corp_meta_speeches,weighting = TRUE)
+
+##why is the frequency in general a bit lower than in the tasks before with the plot where a plot a graph of the words? here it also includes Mr. etc....
+
+#Mr. und Mrs. daran kann man vielleicht etwas zur Frauenquote sagen
 ```
 
+```{r}
+library(scales)
 
+# expect a warning about rows with missing values being removed
+ggplot(freqs_CHN, aes(x = frequency(), y = `Jane Austen`, 
+                      color = abs(`Jane Austen` - proportion))) +
+  geom_abline(color = "gray40", lty = 2) +
+  geom_jitter(alpha = 0.1, size = 2.5, width = 0.3, height = 0.3) +
+  geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +
+  scale_x_log10(labels = percent_format()) +
+  scale_y_log10(labels = percent_format()) +
+  scale_color_gradient(limits = c(0, 0.001), 
+                       low = "darkslategray4", high = "gray75") +
+  facet_wrap(~author, ncol = 2) +
+  theme(legend.position="none") +
+  labs(y = "Jane Austen", x = NULL)
+```
+
+getting dictionaries for my purpose into R
+```{r}
+library(SentimentAnalysis)
+
+# #Harvard General Inquiry Database
+# data(DictionaryGI)
+# summary(DictionaryGI)
+# ##Loughlan and MacDonald
+# data(DictionaryLM)
+# summary(DictionaryLM)
+# 
+# loadDictionaryGI()
+# loadDictionaryLM()
+# loadDictionaryLM_Uncertainty()
+# 
+
+
+# library(textdata)
+# lexicon_loughran(
+#   dir = NULL,
+#   delete = FALSE,
+#   return_path = FALSE,
+#   clean = FALSE,
+#   manual_download = FALSE
+# )
+```
+
+```{r}
+loughran <- data.frame(read_csv("Loughran-McDonald_MasterDictionary_1993-2021.csv"))
+colnames(loughran) <- tolower(colnames(loughran))
+loughran <- loughran[c("positive","uncertainty","strong_modal","weak_modal")]
+loughran$positive <- tolower(loughran$positive)
+loughran$uncertainty <- tolower(loughran$uncertainty)
+loughran$strongmodal <- tolower(loughran$strong_modal)
+loughran$weakmodal <- tolower(loughran$weak_modal)
+dict <- cbindX(dict, loughran)
+colnames(dict) <- c("Military","Cooperation","Positive","Uncertainty","Strongmodal",
+"Weakmodal")
+```
 
