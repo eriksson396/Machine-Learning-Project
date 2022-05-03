@@ -34,29 +34,26 @@ load("data/docs.RData")
 #set a seed for reproducability
 set.seed(2333)
 #data wrangling
-#View(meta_meetings)
-#View(meta_speeches)
 
 ##rename common column to merge the content of the speeches
 meta_speeches <- meta_speeches %>%
   rename(doc_id = filename)
+
 ## merge dataset raw with speeches
 #mutate(meta_speeches, text = raw_docs$text)
 #meta_speeches <- cbind(meta_speeches, raw_docs[c("text")])
-
 meta_speeches <- merge(meta_speeches, raw_docs, by = 'doc_id')
-
+##how to do it after a specific column???
 #add_column(meta_speeches, raw_docs[c("text")], .after = "filename")
+```
 
-
-#try to make it a corpus
-
+# make it a corpus
+```{r}
 #as_corpus_frame(meta_speeches$text, filter = NULL, row.names = NULL)
 corp_meta_speeches <- corpus(meta_speeches, text_field = "text")
 print(corp_meta_speeches)
 
-summary(corp_meta_speeches, 3)
-
+summary(corp_meta_speeches, 1)
 #is_corpus_frame(corp_meta_speeches$text)
 #corpus
 #corpus <- (meta_speeches)
@@ -67,6 +64,8 @@ summary(corp_meta_speeches, 3)
 corp_China <- corpus_subset(corp_meta_speeches, country == "China")
 Chinaspeeches <- subset.data.frame(meta_speeches, country == "China")
 
+#only creates value
+#Germany <- meta_speeches$country == "Germany"
 ##make country names small (something wrong)
 #chinaspeeches_lower <- corpus_subset(corp_meta_speeches, tolower(country) %in% tolower(corp_China))
 
@@ -82,7 +81,6 @@ corp_China$year
 ##create new variables (does not work yet)
 #corp_China$avg_speech_length <- (mean(corp_China$sentences))
 #avg_speech_length
-
 ```
 
 ######
@@ -96,11 +94,11 @@ corpus <- Corpus(VectorSource())
 #######
 
 ```{r}
-##separates by default into words all speeches from raw docs (here by sentences)
+##separates by default into words all speeches from raw docs (here by sentences) variable after tokens
 tidy_raw_sentences <- meta_speeches %>%
-  unnest_tokens(sentences, text, token = "sentences" )  
+  unnest_tokens(sentences_content, text, token = "sentences" )  
 
-##separate into words
+##separate into words a new variable each word per speech (gives us 47,4 Mio obs.)
 tidy_raw_words <- meta_speeches |> 
     unnest_tokens(word, text)
 
@@ -129,18 +127,18 @@ tidy_raw_words %>%
 ```{r same for China}
 ##separates by default into words all speeches from raw docs (here by sentences)
 tidy_raw_sentences_CHN <- Chinaspeeches %>%
-  unnest_tokens(sentences, text, token = "sentences" )  
+  unnest_tokens(sentences_content, text, token = "sentences" )  
 
 #How do I assign the speeches to the columns (now the speeches are in the same order as in the document, but not tied to the countries)
 
 ##separate into words
-tidy_raw_words_China <- Chinaspeeches |> 
+tidy_raw_words_CHN <- Chinaspeeches |> 
     unnest_tokens(word, text)
 
-##remove redundant words (reduces from 47,6 Mio words to 21,4 Mio words)
+##remove redundant words (reduces 600k thousand words)
 data(stop_words)  ##this comes with a package (a list of unuseful words)
 
-tidy_raw_words_China <- tidy_raw_words_China %>%
+tidy_raw_words_CHN <- tidy_raw_words_CHN %>%
   anti_join(stop_words)
 
 ##count words, after redundant words were removed (only meaningful words)
@@ -162,6 +160,8 @@ tidy_raw_words_China %>%
 
 ```{r}
 #calculate the frequency of terms that appear in each speech. It also creates a document feature matrix.
+#frequency of each word in the corpus
+# function takes the respective corpus as an input and returns the frequencies in the form of a data frame
 
 
 get_freqs <- function(corp_meta_speeches, weighting = TRUE){
@@ -210,17 +210,23 @@ getting dictionaries for my purpose into R
 ```{r}
 library(SentimentAnalysis)
 
-# #Harvard General Inquiry Database
-# data(DictionaryGI)
-# summary(DictionaryGI)
-# ##Loughlan and MacDonald
-# data(DictionaryLM)
-# summary(DictionaryLM)
-# 
-# loadDictionaryGI()
-# loadDictionaryLM()
-# loadDictionaryLM_Uncertainty()
-# 
+#Harvard General Inquiry Database
+data(DictionaryGI)
+summary(DictionaryGI)
+##Loughlan and MacDonald
+data(DictionaryLM)
+summary(DictionaryLM)
+
+loadDictionaryGI()
+loadDictionaryLM()
+loadDictionaryLM_Uncertainty()
+#make dataframe from the list
+as.data.frame(DictionaryGI) 
+
+
+###another package to get this word list but not strong and weak modal..
+library(edgar)
+data(LMMasterDictionary)
 
 
 # library(textdata)
@@ -234,9 +240,14 @@ library(SentimentAnalysis)
 ```
 
 ```{r}
+#set wd first (in R directly works better)
+setwd(C:Users/Erik Schulte/ownCloud/Uni Göttingen/Stellenbosch University/Data Science Methods/Github Projects/Machine Learning Project/data)
+#I import the loughran and mcdonald dictionary because it is suitable for my analysis, for sentiments
+
 loughran <- data.frame(read_csv("Loughran-McDonald_MasterDictionary_1993-2021.csv"))
+
 colnames(loughran) <- tolower(colnames(loughran))
-loughran <- loughran[c("positive","uncertainty","strong_modal","weak_modal")]
+loughran <- loughran[c( "word","positive","uncertainty","strong_modal","weak_modal")]
 loughran$positive <- tolower(loughran$positive)
 loughran$uncertainty <- tolower(loughran$uncertainty)
 loughran$strongmodal <- tolower(loughran$strong_modal)
