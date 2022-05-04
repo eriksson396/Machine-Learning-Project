@@ -188,6 +188,10 @@ freqs_all <- get_freqs(corp_meta_speeches,weighting = TRUE)
 #Mr. und Mrs. daran kann man vielleicht etwas zur Frauenquote sagen
 ```
 
+# i have to remove ("interpretation from Chinese first actually)
+
+
+
 ```{r}
 library(scales)
 
@@ -210,14 +214,15 @@ getting dictionaries for my purpose into R
 ```{r}
 library(SentimentAnalysis)
 
-#Harvard General Inquiry Database
+#Harvard General Inquiry Database (only positive and negative)
 data(DictionaryGI)
 summary(DictionaryGI)
 ##Loughlan and MacDonald
 data(DictionaryLM)
 summary(DictionaryLM)
 
-loadDictionaryGI()
+data(DictionaryGI)
+summary(DictionaryGI)
 loadDictionaryLM()
 loadDictionaryLM_Uncertainty()
 #make dataframe from the list
@@ -227,7 +232,7 @@ as.data.frame(DictionaryGI)
 ###another package to get this word list but not strong and weak modal..
 library(edgar)
 data(LMMasterDictionary)
-
+summary(LMMasterdictionary)
 
 # library(textdata)
 # lexicon_loughran(
@@ -245,15 +250,50 @@ setwd(C:Users/Erik Schulte/ownCloud/Uni Göttingen/Stellenbosch University/Data 
 #I import the loughran and mcdonald dictionary because it is suitable for my analysis, for sentiments
 
 loughran <- data.frame(read_csv("Loughran-McDonald_MasterDictionary_1993-2021.csv"))
+#loughran_raw <- data.frame(read_csv("Loughran-McDonald_MasterDictionary_1993-2021.csv"))
 
 colnames(loughran) <- tolower(colnames(loughran))
 loughran <- loughran[c( "word","positive","uncertainty","strong_modal","weak_modal")]
 loughran$positive <- tolower(loughran$positive)
 loughran$uncertainty <- tolower(loughran$uncertainty)
-loughran$strongmodal <- tolower(loughran$strong_modal)
-loughran$weakmodal <- tolower(loughran$weak_modal)
-dict <- cbindX(dict, loughran)
-colnames(dict) <- c("Military","Cooperation","Positive","Uncertainty","Strongmodal",
-"Weakmodal")
+loughran$strong_modal <- tolower(loughran$strong_modal)
+loughran$weak_modal <- tolower(loughran$weak_modal)
+
+
+##merge mit dem anderen dictionary (was ich noch nicht habe...)
+# dict <- cbindX(dict, loughran)
+# colnames(dict) <- c("Military","Cooperation","Positive","Uncertainty","Strongmodal",
+# "Weakmodal")
+```
+## Sentiment Analysis
+
+```{r}
+sentiment_analysis <- function (freqs_all, freqs_CHN, loughran){
+data <- data.frame(matrix(NA,2,dim(loughran)[2]))  #data is the storage table
+colnames(data) <- colnames(loughran)
+
+for (i in colnames(loughran)){
+join_1 <- freqs_all %>% inner_join(loughran, by= c("feature" = i))
+a <- sum(join_1$frequency)/sum(freqs_all$frequency)*100
+
+join_2 <- freqs_CHN %>% inner_join(loughran, by= c("feature" = i))
+b <- sum(join_1$frequency)/sum(freqs_CHN$frequency)*100
+
+data[i] <- rbind(a,b)
+}
+return(data)
+
+}
+```
+
+
+```{r}
+loughlan_sentiments <- get_sentiments("loughlan") %>% 
+  filter(sentiment == "joy")
+
+tidy_books %>%
+  filter(book == "Emma") %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE)
 ```
 
