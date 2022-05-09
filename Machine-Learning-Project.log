@@ -1,14 +1,14 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.4.26)  27 APR 2022 10:30
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.5.9)  9 MAY 2022 12:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **Machine-Learning-Project.tex
 (./Machine-Learning-Project.tex
 LaTeX2e <2021-11-15> patch level 1
-L3 programming layer <2022-04-20> (c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/elsarticle/elsarticle.cls
+L3 programming layer <2022-05-04> (c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/elsarticle/elsarticle.cls
 Document Class: elsarticle 2020/11/20, 3.3: Elsevier Ltd
 (c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/l3kernel/expl3.sty
-Package: expl3 2022-04-20 L3 programming layer (loader) 
+Package: expl3 2022-05-04 L3 programming layer (loader) 
 (c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2022-04-20 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count185
@@ -421,7 +421,7 @@ Package hyperref Warning: Option `bookmarks' has already been used,
 
 Package hyperref Info: Option `colorlinks' set `true' on input line 89.
 (c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/siunitx/siunitx.sty
-Package: siunitx 2022-04-25 v3.1.0 A comprehensive (SI) units package
+Package: siunitx 2022-05-03 v3.1.1 A comprehensive (SI) units package
 \l__siunitx_angle_tmp_dim=\dimen177
 \l__siunitx_angle_marker_box=\box69
 \l__siunitx_angle_unit_box=\box70
@@ -700,7 +700,7 @@ Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: threeparttable package is loaded.
 Package caption Info: wrapfig package is loaded.
 Package caption Info: End \AtBeginDocument code.
-<Tex/SU_horizontal.png, id=44, 553.5882pt x 283.7802pt>
+<Tex/SU_horizontal.png, id=48, 553.5882pt x 283.7802pt>
 File: Tex/SU_horizontal.png Graphic file (type png)
 <use Tex/SU_horizontal.png>
 Package pdftex.def Info: Tex/SU_horizontal.png  used on input line 199.
@@ -748,17 +748,16 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 268.
 (c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) (./Machine-Learning-Project.toc)
-\tf@toc=\write5
-\openout5 = `Machine-Learning-Project.toc'.
-
-
-Overfull \vbox (36.24976pt too high) has occurred while \output is active []
+) (./Machine-Learning-Project.toc
+Overfull \vbox (47.19975pt too high) has occurred while \output is active []
 
 [2
 
 
-]
+])
+\tf@toc=\write5
+\openout5 = `Machine-Learning-Project.toc'.
+
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -777,21 +776,21 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 [4] (./Machine-Learning-Project.aux)
 Package rerunfilecheck Info: File `Machine-Learning-Project.out' has not changed.
-(rerunfilecheck)             Checksum: ECECE7243570DC129CAEF5721EEDA5F3;1012.
+(rerunfilecheck)             Checksum: 4729E8686BAB52854D2D2487ECE87997;1077.
  ) 
 Here is how much of TeX's memory you used:
- 18201 strings out of 480193
- 337713 string characters out of 5890971
- 596461 words of memory out of 5000000
- 35838 multiletter control sequences out of 15000+600000
+ 18205 strings out of 480260
+ 337745 string characters out of 5892259
+ 596495 words of memory out of 5000000
+ 35773 multiletter control sequences out of 15000+600000
  541792 words of font info for 73 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 70i,11n,76p,288b,856s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 70i,11n,76p,288b,846s stack positions out of 10000i,1000n,20000p,200000b,200000s
 {c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}<c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri7.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri9.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmss8.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy6.pfb><c:/Users/Erik Schulte/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt9.pfb>
-Output written on Machine-Learning-Project.pdf (4 pages, 363973 bytes).
+Output written on Machine-Learning-Project.pdf (4 pages, 363128 bytes).
 PDF statistics:
- 188 PDF objects out of 1000 (max. 8388607)
- 148 compressed objects within 2 object streams
- 32 named destinations out of 1000 (max. 500000)
- 86 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 194 PDF objects out of 1000 (max. 8388607)
+ 154 compressed objects within 2 object streams
+ 34 named destinations out of 1000 (max. 500000)
+ 94 words of extra memory for PDF output out of 10000 (max. 10000000)
 

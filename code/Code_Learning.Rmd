@@ -297,3 +297,6 @@ tidy_books %>%
   count(word, sort = TRUE)
 ```
 
+
+# thoughts from May, 6th 
+Eventually think about to put the speech into a list and have one row per speech so it has the same lenght. May be easier to use algorithms etc...
