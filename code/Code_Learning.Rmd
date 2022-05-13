@@ -25,7 +25,7 @@ library(kableExtra)
 library(tidytext)
 library(corpus)
 library(tibble)
-
+library(readxl)
 
 #load the UN Security Council Debates dataset
 load("data/dataset.RData")
@@ -135,20 +135,20 @@ tidy_raw_sentences_CHN <- Chinaspeeches %>%
 tidy_raw_words_CHN <- Chinaspeeches |> 
     unnest_tokens(word, text)
 
-##remove redundant words (reduces 600k thousand words)
+##remove redundant words (reduces to 600k thousand words)
 data(stop_words)  ##this comes with a package (a list of unuseful words)
 
 tidy_raw_words_CHN <- tidy_raw_words_CHN %>%
   anti_join(stop_words)
 
 ##count words, after redundant words were removed (only meaningful words)
-tidy_raw_words_China %>%
+tidy_raw_words_CHN %>%
   count(word, sort = TRUE)
 
 ##plotting most common wordsChina (mit mehr als 3.000 Wörtern)
 library(ggplot2)
 
-tidy_raw_words_China %>%
+tidy_raw_words_CHN %>%
   count(word, sort = TRUE) %>%
   filter(n > 3000) %>%
   mutate(word = reorder(word, n)) %>%
@@ -211,72 +211,59 @@ ggplot(freqs_CHN, aes(x = frequency(), y = `Jane Austen`,
 ```
 
 getting dictionaries for my purpose into R
-```{r}
-library(SentimentAnalysis)
-
-#Harvard General Inquiry Database (only positive and negative)
-data(DictionaryGI)
-summary(DictionaryGI)
-##Loughlan and MacDonald
-data(DictionaryLM)
-summary(DictionaryLM)
-
-data(DictionaryGI)
-summary(DictionaryGI)
-loadDictionaryLM()
-loadDictionaryLM_Uncertainty()
-#make dataframe from the list
-as.data.frame(DictionaryGI) 
-
-
-###another package to get this word list but not strong and weak modal..
-library(edgar)
-data(LMMasterDictionary)
-summary(LMMasterdictionary)
-
-# library(textdata)
-# lexicon_loughran(
-#   dir = NULL,
-#   delete = FALSE,
-#   return_path = FALSE,
-#   clean = FALSE,
-#   manual_download = FALSE
-# )
-```
 
 ```{r}
 #set wd first (in R directly works better)
 setwd(C:Users/Erik Schulte/ownCloud/Uni Göttingen/Stellenbosch University/Data Science Methods/Github Projects/Machine Learning Project/data)
+
+#I manually collected the word from the Harvard General Inquirer for these wordlists
+# Difficult, to obtain...
+
+GI_dic <- data.frame(read_excel("General_inquire.xlsx"))
+GI_dic$military <- tolower(GI_dic$military) #make words to lower case in military columns
+GI_dic$powercoop <- tolower(GI_dic$powercoop) #mark words to lower case in powercoop column
+colnames(GI_dic) <- tolower(colnames(GI_dic))
+
+dict <- GI_dic |> 
+    select(military, powercoop)  #I only use the word lists from military and powercoop
+
+#dict <- GI_dic[c("military","powercoop")]  ##this would create a new dataframe
+```
+
+
+```{r}
+loughran <- data.frame(read_excel("LoughranMcDonald_SentimentWordLists_2018.xlsx"))
 #I import the loughran and mcdonald dictionary because it is suitable for my analysis, for sentiments
 
-loughran <- data.frame(read_csv("Loughran-McDonald_MasterDictionary_1993-2021.csv"))
-#loughran_raw <- data.frame(read_csv("Loughran-McDonald_MasterDictionary_1993-2021.csv"))
 
 colnames(loughran) <- tolower(colnames(loughran))
-loughran <- loughran[c( "word","positive","uncertainty","strong_modal","weak_modal")]
+# Select the following 4 categories for my analysis, exclude negative inter alia
+loughran <- loughran[c("positive","uncertainty","strongmodal","weakmodal")]
+# make all words to lower case
 loughran$positive <- tolower(loughran$positive)
 loughran$uncertainty <- tolower(loughran$uncertainty)
-loughran$strong_modal <- tolower(loughran$strong_modal)
-loughran$weak_modal <- tolower(loughran$weak_modal)
+loughran$strongmodal <- tolower(loughran$strongmodal)
+loughran$weakmodal <- tolower(loughran$weakmodal)
 
 
-##merge mit dem anderen dictionary (was ich noch nicht habe...)
-# dict <- cbindX(dict, loughran)
-# colnames(dict) <- c("Military","Cooperation","Positive","Uncertainty","Strongmodal",
-# "Weakmodal")
+#cbindX = column-binds objects with different number of rows. 
+dict <- cbindX(dict, loughran)
+colnames(dict) <- c("Military","Cooperation","Positive","Uncertainty","Strongmodal",
+"Weakmodal")
 ```
+
 ## Sentiment Analysis
 
 ```{r}
-sentiment_analysis <- function (freqs_all, freqs_CHN, loughran){
-data <- data.frame(matrix(NA,2,dim(loughran)[2]))  #data is the storage table
-colnames(data) <- colnames(loughran)
+sentiment_analysis <- function (freqs_all, freqs_CHN, dict){
+data <- data.frame(matrix(NA,2,dim(dict)[2]))  #data is the storage table
+colnames(data) <- colnames(dict)
 
-for (i in colnames(loughran)){
-join_1 <- freqs_all %>% inner_join(loughran, by= c("feature" = i))
+for (i in colnames(data)){
+join_1 <- freqs_all %>% inner_join(dict, by= c("feature" = i))
 a <- sum(join_1$frequency)/sum(freqs_all$frequency)*100
 
-join_2 <- freqs_CHN %>% inner_join(loughran, by= c("feature" = i))
+join_2 <- freqs_CHN %>% inner_join(dict, by= c("feature" = i))
 b <- sum(join_1$frequency)/sum(freqs_CHN$frequency)*100
 
 data[i] <- rbind(a,b)
@@ -284,7 +271,99 @@ data[i] <- rbind(a,b)
 return(data)
 
 }
+
+# important function called sentiment_analysis uses this dict data frame together with
+# the previously created term frequency tables as inputs. It then calculates a proportional
+# count of each category to measure the tone of the language and outputs the result as a data
+# frame. To do so, the function initializes a storage table for our results named data. The
+# column names of the result table are set to the categories contained in the dictionary table.
+# We then iterate through the column names (i.e. the categories) to match the words of each
+# category with the term frequency tables. The resulting data frame join_1 contains only
+# the words, that are in both data frames (this is called an inner join). We then calculate
+# the share of words for each category from the overall frequency. The same is applied to
+# the second term frequency table and then saved to the result table.
+
 ```
+
+
+```{r}
+##also create a tidy dictionary, we I have 863 words with 5 sentiment categories in total
+tidy_dict <- dict %>% tidyr::gather("Sentiment", value, 1:6) |> 
+    rename(word = value) |> 
+    drop_na()
+```
+
+
+```{r}
+#https://www.tidytextmining.com/sentiment.html
+# consider the text as a combination of its individual words and the sentiment content of the whole text as the sum of the sentiment content of the individual words (maybe that's I have one observation per row)
+# lexicons are based on unigrams, i.e., single words. These lexicons contain many English words and the words are assigned scores for positive/negative sentiment
+
+# My lexicon categorizes words in a binary fashion (“yes”/“no”) into categories of positive, Military ,Cooperation, UNcertainty , strongmodal and weakmodal, anger,
+# 
+# Dictionary-based methods like the ones we are discussing find the total sentiment of a piece of text by adding up the individual sentiment scores for each word in the text. 
+# . It is important to keep in mind that these methods do not take into account qualifiers before a word, such as in “no good” or “not true”; a lexicon-based method like this is based on unigrams only.
+
+# Now that the text is in a tidy format with one word per row, we are ready to do the sentiment analysis. First, let’s use the my self-created dictionary and filter() for the cooperation XXX words
+
+```
+
+
+```{r}
+#what are my hypotheses?
+
+# Hypothesis 1: China will hold more and longer speeches due to underpin its underpin as global power.
+
+#Hypothesis 2:  Small countries use more words that fall in the category of Positive, Strong Modal, Cooperation and less Uncertainty Military and Weak modal 
+#1 China uses more aggressive and and confident language
+
+#2 Over time Chinas speech length increases as part of its hunger for power
+
+```
+
+
+##Sentiment analysis (Important Section)
+```{r}
+#CHINA ### try to do sentiment as in tidy text with R book (WORKS!!!!)
+tidy_raw_words_CHN %>%
+  inner_join(tidy_dict) %>%
+  count(word, sort = TRUE)
+```
+
+
+```{r}
+###same for the whole corpus
+tidy_raw_words %>%
+  inner_join(tidy_dict) %>%
+  count(word, sort = TRUE)
+```
+
+
+
+
+
+
+## Descriptive Statistics
+```{r}
+desc <- data.frame(matrix(NA,3,3))
+colnames(desc) <- c("Speeches","Sentences","Share")
+rownames(desc) <- c("Corpus", "All States","China")
+desc$Speeches <- rbind(length(corp),length(corp_1),length(corp_2))
+desc$Sentences <- rbind(mean(summary(corp)$Sentences),mean(summary(corp_1)$Sentences),
+mean(summary(corp_2)$Sentences))
+desc$Share <- rbind(100, round((length(corp_1)/length(corp))*100,2),
+round((length(corp_2)/length(corp))*100,2))
+kable(desc, caption="\\label{tab:tab1}Descriptive Statistics of the UNSC Speech Data",
+booktabs = T) %>% kable_styling(latex_options = "HOLD_position", font_size = 10)
+```
+
+
+# tidy text analysis I would need to make my dictionary in a tidy format
+
+
+
+
+
 
 
 ```{r}
@@ -298,5 +377,6 @@ tidy_books %>%
 ```
 
 
-# thoughts from May, 6th 
-Eventually think about to put the speech into a list and have one row per speech so it has the same lenght. May be easier to use algorithms etc...
+# thoughts from May, 6th after talk to Pablo
+Eventually think about to put the speech into a list and have one row per speech so it has the same length. May be easier to use algorithms etc...
+Try to keep it simple.
