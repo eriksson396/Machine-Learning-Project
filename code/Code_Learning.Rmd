@@ -96,7 +96,8 @@ corpus <- Corpus(VectorSource())
 ```{r}
 ##separates by default into words all speeches from raw docs (here by sentences) variable after tokens
 tidy_raw_sentences <- meta_speeches %>%
-  unnest_tokens(sentences_content, text, token = "sentences" )  
+  unnest_tokens(sentences_content, text, token = "sentences" )
+##The problem with the sentences is that it also creates a new sentence after each . (see Mr. etc...)
 
 ##separate into words a new variable each word per speech (gives us 47,4 Mio obs.)
 tidy_raw_words <- meta_speeches |> 
@@ -328,17 +329,32 @@ tidy_dict <- dict %>% tidyr::gather("Sentiment", value, 1:6) |>
 tidy_raw_words_CHN %>%
   inner_join(tidy_dict) %>%
   count(word, sort = TRUE)
+
+#In all speeches China uses the words like peace cooperation , positive words..
+
+
 ```
 
-
 ```{r}
-###same for the whole corpus
-tidy_raw_words %>%
-  inner_join(tidy_dict) %>%
+#How do I get the word count only for each Sentiment category?
+#I do not want to create new object in the environment..
+
+tidy_raw_words_CHN %>%
+  inner_join(tidy_dict$Sentiment) %>%
   count(word, sort = TRUE)
 ```
 
 
+
+
+
+
+```{r}
+###same for the whole corpus and WHOLE dictionary
+tidy_raw_words %>%
+  inner_join(tidy_dict) %>%
+  count(word, sort = TRUE)
+```
 
 
 
