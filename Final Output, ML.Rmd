@@ -1,0 +1,53 @@
+---
+title: "Final Output Machine Learning"
+author: "Erik Schulte"
+date: "30 6 2022"
+bibliography: Tex/ref.bib
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction \label{Introduction}
+
+References are to be made as follows: @fama1997[p. 33] and @grinold2000 Such authors could also be referenced in brackets [@grinold2000] and together [@fama1997 \& @grinold2000]. Source the reference code f
+
+# Data  {-}
+First of all, I present all relevant data sources and explain essential features to get a
+proper overview. Afterwards, I explain the process of loading the data into R and how
+we process the raw text corpus, to obtain meaningful results.
+
+## Data Sources
+
+For our empirical analysis we use three main data sources. The ﬁrst two data sources are
+used for the text analysis and the building of the subgroups. Data on the speeches of
+the UNSC were obtained from @schonfeld2019. It contains 82165 speeches over
+the years 1995 until 2017.
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+#load required packages
+library(tidyverse)
+library(readtext)
+library(quanteda)
+library(quanteda.textplots)
+library(quanteda.textstats)
+library(ggplot2)
+library(magrittr)
+library(gdata)
+library(kableExtra)
+
+
+#load the UN Security Council Debates dataset
+load("data/dataset.RData")
+load("data/docs.RData")
+
+#set a seed for reproducability
+set.seed(2333)
+# View data
+#head(meta_meetings)
+#head(meta_speeches)
+```
+
+

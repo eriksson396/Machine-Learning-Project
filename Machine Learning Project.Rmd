@@ -52,7 +52,7 @@ abstract: |
 
 <!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
 
-```{r setup, include=FALSE}
+```{r setup, echo=TRUE, message=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
 #load required packages
 if(!require("tidyverse")) install.packages("tidyverse")
@@ -73,13 +73,9 @@ load("data/docs.RData")
 
 #set a seed for reproducability
 set.seed(2333)
-#data wrangling
-View(meta_meetings)
-View(meta_speeches)
-
-
-corpus <- (meta_speeches)
-Chinaspeeches <- subset.data.frame(corpus, country == "China") #only the speeches from China
+# View data
+#head(meta_meetings)
+#head(meta_speeches)
 ```
 
 
@@ -91,8 +87,20 @@ Chinaspeeches <- subset.data.frame(corpus, country == "China") #only the speeche
 
 References are to be made as follows: @fama1997[p. 33] and @grinold2000 Such authors could also be referenced in brackets [@grinold2000] and together [@fama1997 \& @grinold2000]. Source the reference code f
 
-# Data  {-}
 
+```{r}
+corpus <- (meta_speeches)
+Chinaspeeches <- subset.data.frame(corpus, country == "China") #only the speeches from China
+
+```
+
+
+
+
+# Data  {-}
+First of all, I present all relevant data sources and explain essential features to get a
+proper overview. Afterwards, I explain the process of loading the data into R and how
+we process the raw text corpus, to obtain meaningful results.
 
 
 #  Methodology \label{Meth}

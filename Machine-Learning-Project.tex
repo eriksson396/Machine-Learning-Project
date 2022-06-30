@@ -292,6 +292,49 @@ must read your paper in entirety.
 
 
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{knitr}\SpecialCharTok{::}\NormalTok{opts\_chunk}\SpecialCharTok{$}\FunctionTok{set}\NormalTok{(}\AttributeTok{echo =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{message =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{warning =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{fig.width =} \DecValTok{6}\NormalTok{, }\AttributeTok{fig.height =} \DecValTok{5}\NormalTok{, }\AttributeTok{fig.pos=}\StringTok{"H"}\NormalTok{, }\AttributeTok{fig.pos =} \StringTok{\textquotesingle{}H\textquotesingle{}}\NormalTok{)}
+\CommentTok{\#load required packages}
+\ControlFlowTok{if}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{require}\NormalTok{(}\StringTok{"tidyverse"}\NormalTok{)) }\FunctionTok{install.packages}\NormalTok{(}\StringTok{"tidyverse"}\NormalTok{)}
+\FunctionTok{library}\NormalTok{(tidyverse)}
+\FunctionTok{library}\NormalTok{(readtext)}
+\FunctionTok{library}\NormalTok{(quanteda)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in .recacheSubclasses(def@className, def, env): undefined subclass
+## "packedMatrix" of class "replValueSp"; definition not updated
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in .recacheSubclasses(def@className, def, env): undefined subclass
+## "packedMatrix" of class "mMatrix"; definition not updated
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(quanteda.textplots)}
+\FunctionTok{library}\NormalTok{(quanteda.textstats)}
+\FunctionTok{library}\NormalTok{(ggplot2)}
+\FunctionTok{library}\NormalTok{(magrittr)}
+\FunctionTok{library}\NormalTok{(gdata)}
+\FunctionTok{library}\NormalTok{(kableExtra)}
+
+
+\CommentTok{\#load the UN Security Council Debates dataset}
+\FunctionTok{load}\NormalTok{(}\StringTok{"data/dataset.RData"}\NormalTok{)}
+\FunctionTok{load}\NormalTok{(}\StringTok{"data/docs.RData"}\NormalTok{)}
+
+\CommentTok{\#set a seed for reproducability}
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{2333}\NormalTok{)}
+\CommentTok{\# View data}
+\CommentTok{\#head(meta\_meetings)}
+\CommentTok{\#head(meta\_speeches)}
+\end{Highlighting}
+\end{Shaded}
+
 \hypertarget{introduction}{%
 \section{\texorpdfstring{Introduction
 \label{Introduction}}{Introduction }}\label{introduction}}
@@ -309,6 +352,11 @@ code f
 \hypertarget{data}{%
 \section*{Data}\label{data}}
 \addcontentsline{toc}{section}{Data}
+
+First of all, I present all relevant data sources and explain essential
+features to get a proper overview. Afterwards, I explain the process of
+loading the data into R and how we process the raw text corpus, to
+obtain meaningful results.
 
 \hypertarget{methodology}{%
 \section{\texorpdfstring{Methodology
