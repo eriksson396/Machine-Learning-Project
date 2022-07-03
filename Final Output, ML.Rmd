@@ -177,9 +177,26 @@ scale_x_continuous(labels = comma_format(big.mark = ".",
  
  most_common_words_UNSC
 ```
+I also plot the 40 most common words from the UNSC in a wordcloud.
+```{r, message=FALSE}
+# Load the wordcloud package
+library(wordcloud)
 
+# Compute word counts and assign to word_counts
+word_counts_UNSC <- tidy_raw_words %>% 
+  count(word)
 
-I then apply the same analysis for the dataframe from the Chinese speeches.
+wordcloud(
+  # Assign the word column to words
+  word = word_counts_UNSC$word, 
+  # Assign the count column to freq
+  freq =word_counts_UNSC$n,
+  scale=c(2,.4),
+  max.words = 40,
+  colors = "blue"
+)
+```
+I then apply the same analysis for the data frame from the Chinese speeches.
 ```{r, include=FALSE}
 #same analysis for Chinese speeches....
 ##separates by default into words all speeches from raw docs (here by sentences)
@@ -219,6 +236,25 @@ most_common_CHN <- tidy_raw_words_CHN %>%
 most_common_CHN
 ```
 
+Additionally, I visualize the 40 most common words in a wordcloud using the wordcloud package.
+```{r, message=FALSE}
+# Load the wordcloud package
+library(wordcloud)
+
+# Compute word counts and assign to word_counts
+word_counts_CHN <- tidy_raw_words_CHN %>% 
+  count(word)
+
+wordcloud(
+  # Assign the word column to words
+  word = word_counts_CHN$word, 
+  # Assign the count column to freq
+  freq =word_counts_CHN$n,
+  scale=c(2,.4),
+  max.words = 40,
+  colors = "red"
+)
+```
 
 ## Frequency terms
 Next, I calculate frequency terms. The function get_freqs creates a list of the frequency of terms that appear in each speech. The function takes the respective corpus as an input and returns the frequencies in the form of a data frame. In the ﬁrst step, it creates tokens from the text documents. Tokens are a sequence of elementary lexical components, in our case words. Punctuation, separators and stop words like “he”, “do”, or “if” are excluded as they have no meaning for the content and therefore represent no real added value for the analysis.
@@ -322,12 +358,16 @@ return(data)
 
 ```
 
-
+My self-created tidy dictionary contains two columns with 863 words and 5 sentiment categories in total. 88 words belong to the Cooperation wordlist, 79 to the Military wordlist, 353 to the Positive wordlist, 19 to the strong modal wordlist, 297 to the uncertainty wordlist and 27 to the weak modal wordlist.
 ```{r}
 ##also create a tidy dictionary, we I have 863 words with 5 sentiment categories in total
 tidy_dict <- dict %>% tidyr::gather("Sentiment", value, 1:6) |> 
     rename(word = value) |> 
-    drop_na()
+    drop_na() |> 
+as_tibble(tidy_dict) 
+
+tidy_dict |>  
+   count(Sentiment)
 ```
 
 
