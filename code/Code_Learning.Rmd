@@ -113,6 +113,7 @@ tidy_raw_words <- tidy_raw_words %>%
 tidy_raw_words %>%
   count(word, sort = TRUE)
 
+
 ##plotting most common words (mit mehr als 80.000 Wörtern)
 library(ggplot2)
 
@@ -121,9 +122,17 @@ tidy_raw_words %>%
   filter(n > 80000) %>%
   mutate(word = reorder(word, n)) %>%
   ggplot(aes(n, word)) +
+    scale_x_continuous(labels = comma_format(big.mark = ".",
+                                           decimal.mark = ",")) +
   geom_col() +
+    ggtitle = (label = "The most common words in the UNSC")
   labs(y = NULL)
 ```
+
+```{r}
+
+```
+
 
 ```{r same for China}
 ##separates by default into words all speeches from raw docs (here by sentences)
@@ -272,17 +281,6 @@ data[i] <- rbind(a,b)
 return(data)
 
 }
-
-# important function called sentiment_analysis uses this dict data frame together with
-# the previously created term frequency tables as inputs. It then calculates a proportional
-# count of each category to measure the tone of the language and outputs the result as a data
-# frame. To do so, the function initializes a storage table for our results named data. The
-# column names of the result table are set to the categories contained in the dictionary table.
-# We then iterate through the column names (i.e. the categories) to match the words of each
-# category with the term frequency tables. The resulting data frame join_1 contains only
-# the words, that are in both data frames (this is called an inner join). We then calculate
-# the share of words for each category from the overall frequency. The same is applied to
-# the second term frequency table and then saved to the result table.
 
 ```
 
