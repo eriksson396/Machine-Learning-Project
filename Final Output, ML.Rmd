@@ -1,6 +1,6 @@
 ---
-title: "Geopolitical Changes in the UNSC -- Is China's growing global ambitions reflected in its communication in the UNSC?"
-author: "Erik Valentin Schulte"
+title: "Geopolitical Changes in the UNSC -- Is China's growing global ambition reflected in its communication in the UNSC?"
+author: "Erik Valentin Schulte^[The project and the code is also available on: https://github.com/eriksson396/Machine-Learning-Project]"
 date: "July 7th 2022"
 bibliography: Tex/ref.bib
 output: pdf_document
@@ -12,36 +12,24 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction \label{Introduction}
 
-References are to be made as follows: @fama1997[p. 33] and @grinold2000 Such authors could also be referenced in brackets [@grinold2000] and together [@fama1997 \& @grinold2000]. Source
-
-Theory Part...
-
-Based on the theory of China's potential shift in policy objectives in the UNSC, I now conduct the empirical evaluation.
-For this purpose, I ﬁrst describe the data preparation process. Secondly, I conduct
-the actual computer assisted text analysis which presents several measures and examines
-the hypotheses. 
+Recently, the geopolitical architecture of the world is becoming more and more challenged. Established institutions such as the United Nations (UN) and its lower-tier institutions are shaken by international disputes. One of the most apparent shifts is the ever-growing importance of China in the international arena. This shift in power weights is also reflected in China's international demeanor, diplomacy and communication. The term "wolf warrior diplomacy" [@wolfs] became a widespread synonym of this China's growing confidence and aggressive representation of its policy objectives. Its claims in the congested and strategically important South China Sea is one of the areas, where the country's interests are represented vividly.
+Therefore, it would be interesting if this development and shifts in policy objectives can also be observed in China's official communication in the current international institutions. China being a permanent member of the United Nations Security Council (UNSC) and the importance of this body, makes it an interesting case to study. The data by @UNSC are an ideal match for my study purposes. My first hypothesis is that China's use of language became more demanding and direct given in light of the wolf warrior diplomacy. Secondly, I would hypothesis that in general China communicated more in this body and that topics directly dealt with China's interests.
+Based on the theory of China's potential shift in policy objectives in the UNSC, I now conduct the empirical evaluation. For this purpose, I ﬁrst describe the data preparation process. Secondly, I conduct the actual computer assisted text analysis which presents several measures and examines the hypotheses. 
 
 # Link between Machine Learning and Text Analysis
+
+The data of the speeches of the @UNSC data are unstructured. Quantitative text analysis -- that is employed in this paper -- is a machine learning (ML) technique that seeks to automatically gain valuable insights from large amounts of unstructured text data. The major challenge of quantitative text analysis is to take the ambiguities of human language into account -- an issue that can only be partially addressed in this paper. An example, is the negation word "not", that may totally change the context in which certain words are used. \newline
+My paper will solely focus on unsupervised machine learning methods that are applied from [@tidytext \& @datacamp]. In general, quantitative text analysis is covered in parts of ML and Natural Language Processing (NLP). I will cover text mining techniques such as word frequency, text classification such as sentiment analysis and topic modelling. Important challenges to apply ML to text is the complexity of the analysis the conceptual difficulties (e.g. humour/sarcasm in human language) and taking into account cultural norms of communication [@textML]. For further reading on the link between text mining and ML, I refer to @ML2019.
 
 # Data  {-}
 First of all, I present all relevant data sources and explain essential features to get a
 proper overview. Afterwards, I explain the process of loading the data into R and how
-we process the raw text corpus, to obtain meaningful results.
-
-The dataset comprises UN Security Council debates between January 1995 and December 2020 and was downloaded from @UNSC. The official meeting protocols are split into distinct speeches. For every speech, metadata regarding the speaker, the speaker's nation or affiliation, and the speaker's role in the meeting is given. The topic of the meeting is also given. In total, the corpus contains 82,165 speeches extracted from 5,748 meeting protocols. @UNSC also provide a codebook with the exact description of their workflow how to set-up the database.
-
+we process the raw text corpus, to obtain meaningful results.\newline
+For our empirical analysis we use three main data sources. The main data set comprises UN Security Council debates between January 1995 and December 2020 and was downloaded from @UNSC. The official meeting protocols are split into distinct speeches. For every speech, metadata regarding the speaker, the speaker's nation or affiliation, and the speaker's role in the meeting is given. The topic of the meeting is also given. In total, the corpus contains 82,165 speeches extracted from 5,748 meeting protocols. The download file of @UNSC also provides a code book with the exact description of their workflow how to set-up the database as well as a detailed variable description.
+\newline
 The data are split in to a file containing all information about the UNSC meetings, one file about the metadata of the speeches and one file containing the whole text of the speeches.
-
-## Data Sources
-
-For our empirical analysis we use three main data sources. The ﬁrst two data sources are
-used for the text analysis and the building of the subgroups. Data on the speeches of
-the UNSC were obtained from @schonfeld2019. It contains 82165 speeches over
-the years 1995 until 2017.
-
 The other two data sources are word dictionaries for the sentiment analysis. It is crucial for the sentiment analysis, that the dictionaries are suitable for the specific context of analysis. For example, a word list developed for sociology may not be a good fit to analyze text data from for ﬁnance, and vice versa. The selection of the right word lists is therefore of uttermost importance to get meaningful and robust results @grimmer2013[pp. 274-275]. Hence, I carefully choose only certain categories from the dictionaries which are less prone to missclassiﬁcation. Two wordlists namely Military
-and Cooperation are from the most widely used standard dictionary, the Harvard General
-Inquirer (see @GeneralInquirer). The other four wordlists: Positive, Uncertainty, Strong Modal and Weak Modal are from @Loughran. Word categories that were specially adapted to the ﬁnancial context by Loughran and McDonald (2011), such as the negative wordlist, are neglected in my analysis.
+and Cooperation are from the most widely used standard dictionary, the Harvard General Inquirer (see @GeneralInquirer). The other four wordlists: Positive, Uncertainty, Strong Modal and Weak Modal are from @Loughran. Word categories that were specially adapted to the ﬁnancial context by Loughran and McDonald (2011), such as the negative wordlist, are neglected in my analysis.
 
 ## Data preparation
 In the next step, I import the speech data into R from the data folder of my project file. To be able to process larger amounts of text, I need special packages in R. These include the quanteda, quanteda.textplot and quanteda.textstats. Other libraries like tidyverse, magrtittr, dyplr, ggplot2, readtext, and kableExtra are used to manipulate the data and plot it. We also set a seed, so that our results are reproducible.
@@ -159,7 +147,7 @@ tidy_raw_words <- tidy_raw_words %>%
 #   count(word, sort = TRUE)
 
 ```
-## A first visual inspection of the most commonly used words
+# A first visual inspection of the most commonly used words
 
 We can see from the graph that council, security and united are the most frequently used words. This gives are first overview of the most used words.
 
@@ -259,7 +247,7 @@ wordcloud(
 ```
 A central question in text mining and natural language processing is how to quantify what a document is about. One measure of how important a word may be is its term frequency (tf), how frequently a word occurs in a document.
 
-## Frequency terms
+# Frequency terms
 Next, I calculate frequency terms. The function get_freqs creates a list of the frequency of terms that appear in each speech. The function takes the respective corpus as an input and returns the frequencies in the form of a data frame. In the ﬁrst step, it creates tokens from the text documents. Tokens are a sequence of elementary lexical components, in our case words. Punctuation, separators and stop words like “he”, “do”, or “if” are excluded as they have no meaning for the content and therefore represent no real added value for the analysis.
 The dfm() function is then applied to the tokens to create the document feature matrix (dfm). As the dfm is a very sparse matrix containing the documents as rows and the terms as columns, I aggregate the data over all documents and sort the frequency of the terms in a descending order using the textstat_frequency() command. In addition, a special feature of the get_freqs function is the weighting parameter, which is set to FALSE per default. If it is being activated the frequencies are weighted according to the term-frequency inverse
 document frequency (tf.idf) weighting scheme. This measures how important a word is to a document compared with a corpus of other documents, e.g. one short story in a collection of short stories.
@@ -268,8 +256,6 @@ $idf(\text{term}) = \ln{\left(\frac{n_{\text{documents}}}{n_{\text{documents con
 
 In the end we apply the get_dfm function to
 the two corpora and save the result in the variable freqs_all and freqs_CHN respectively.
-
-# i have to remove ("interpretation from Chinese first actually)
 
 ```{r}
 #calculate the frequency of terms that appear in each speech. It also creates a document feature matrix.
@@ -346,6 +332,8 @@ head(freq_by_rank_CHN)
 ```
 The rank column here tells us the rank of each word within the frequency table; the table was already ordered by n so we could use row_number() to find the rank. Then, we can calculate the term frequency in the same way we did before. Zipf’s law is often visualized by plotting rank on the x-axis and term frequency on the y-axis, on logarithmic scales. Plotting this way, an inversely proportional relationship will have a constant, negative slope.
 
+### Zipf's law
+
 ```{r}
 freq_by_rank_CHN %>% 
   ggplot(aes(rank, `term frequency`)) + 
@@ -386,7 +374,7 @@ We have found a result close to the classic version of Zipf’s law for the corp
 ## The bind_tf_idf() function
  The idea of tf-idf is to find the important words for the content of each document by decreasing the weight for commonly used words and increasing the weight for words that are not used very much in a collection or corpus of documents, in this case, the speeches by China in the UNSC. Calculating tf-idf attempts to find the words that are important (i.e., common) in a text, but not too common.
  
-The bind_tf_idf() function in the tidytext package takes a tidy text dataset as input. One column (word here) contains the terms/tokens, one column contains the documents (speech in this case), and the last necessary column contains the counts, how many times each speech contains each term (n in this example). I calculated a total for each speech for our explorations in previous sections, but it is not necessary for the bind_tf_idf() function; the table only needs to contain all the words in each speech.
+The bind_tf_idf() function in the tidytext package takes a tidy text dataset as input. One column (word here) contains the terms/tokens, one column contains the documents (speech in this case), and the last necessary column contains the counts, how many times each speech contains each term (n in this example). I create a new dataframe for this, as the bind_tf_idf function requires a document entry (speeches in my case). 
  
 ```{r}
 CHN_tf_idf <- speech_words_CHN_per_speech %>%  #89955 variables...
@@ -395,7 +383,46 @@ CHN_tf_idf <- speech_words_CHN_per_speech %>%  #89955 variables...
 head(CHN_tf_idf)
 
 ```
+The idf and thus tf-idf are zero for these most common words (China). Unsurprisingly, the word China appears very often in the speeches of China, so the idf-term (which will then be the natural log of 1) is zero. The inverse document frequency (and thus tf-idf) is close to zero for words that occur in many of the speeches in a collection. This is, in fact, the procedure how this approach decreases the weight for common words. The inverse document frequency will be a higher number for words that occur in fewer speeches.
  
+```{r, echo=FALSE, results='hide', message=FALSE}
+CHN_tf_idf %>%
+  select(-total) %>%
+  arrange(desc(tf_idf))
+
+
+```
+Here we see important words that are in fact important in these respective speeches. None of them occurs in all of speeches. But they are important, characteristic words for each speech within the corpus of the UNSC speeches by China. We can see that one speech (speech 129) most likely talked about the still ongoing territorial disputes in the South China Sea, as nansha, islands, and sea were important words in that speech.
+
+```{r}
+#make this example reproducible
+set.seed(1)
+
+#define data
+high_tf_idf_CHN <- data.frame(speech=c('110', "129", '129', '51', "129", "51"),
+                 word=c('japanese', 'nansha', "islands", "1422", "sea", "icc"),
+                 n=c(13, 3, 4, 1, 7, 3),
+                tf=c(0.036011080, 0.015384615, 0.020512821, 0.014492754, 0.035897436, 0.043478261),
+                idf=c(2.1972246, 3.8066625, 2.7080502, 3.8066625, 1.4087672, 1.0986123),
+                tf_idf=c(0.07912443, 0.05856404, 0.05554975, 0.05516902, 0.05057113, 0.04776575))
+                
+#view head of data 
+head(high_tf_idf_CHN)
+```
+
+ 
+```{r, include=FALSE}
+library(forcats)
+
+CHN_tf_idf %>%
+  group_by(speech) %>%
+  slice_max(tf_idf, n = 15) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(word, tf_idf), fill = speech)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~speech, ncol = 1, scales = "free") +
+  labs(x = "tf-idf", y = NULL)
+```
  
  
 # Sentiment Analysis
@@ -512,7 +539,7 @@ sentiment_review_CHN |>
 ```
 
 
-## visualizing sentiments
+# visualizing sentiments
 
 ```{r}
 #sentiment_review_CHN2 <- sentiment_review %>%  
@@ -645,9 +672,6 @@ CHN_sentiment_development <- grid.arrange(Cooperation_CHN, Military_CHN, Positiv
 
 
 
-
-
-
 # Topic Modelling
 For topic modelling we need to create document term matrices (dtm). Sparsity of a matrix refers to how many zeros it contains. It should contain one row for each speech given by China.
 With the cast_dtm commmand from the tidytext package, we can count each word in each speech and then creates a dtm from the word counts per speech.
@@ -738,6 +762,13 @@ ggplot(
   coord_flip() 
 ```
 
+
+
+# Conclusion
+
+All in all we can say that the data by @UNSC is very rich and perfectly suitable for conducting text analysis. 
+
+
 \newpage
 
 # References {-}
@@ -745,3 +776,4 @@ ggplot(
 <div id="refs"></div>
 
 
+# Appendix {-}
