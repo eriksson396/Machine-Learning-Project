@@ -1,6 +1,6 @@
 ---
 title: "Geopolitical Changes in the UNSC -- Is China's growing global ambitions reflected in its communication in the UNSC?"
-author: "Erik Schulte"
+author: "Erik Valentin Schulte"
 date: "July 7th 2022"
 bibliography: Tex/ref.bib
 output: pdf_document
@@ -20,6 +20,8 @@ Based on the theory of China's potential shift in policy objectives in the UNSC,
 For this purpose, I ﬁrst describe the data preparation process. Secondly, I conduct
 the actual computer assisted text analysis which presents several measures and examines
 the hypotheses. 
+
+# Link between Machine Learning and Text Analysis
 
 # Data  {-}
 First of all, I present all relevant data sources and explain essential features to get a
@@ -255,12 +257,16 @@ wordcloud(
   colors = "red"
 )
 ```
+A central question in text mining and natural language processing is how to quantify what a document is about. One measure of how important a word may be is its term frequency (tf), how frequently a word occurs in a document.
 
 ## Frequency terms
 Next, I calculate frequency terms. The function get_freqs creates a list of the frequency of terms that appear in each speech. The function takes the respective corpus as an input and returns the frequencies in the form of a data frame. In the ﬁrst step, it creates tokens from the text documents. Tokens are a sequence of elementary lexical components, in our case words. Punctuation, separators and stop words like “he”, “do”, or “if” are excluded as they have no meaning for the content and therefore represent no real added value for the analysis.
 The dfm() function is then applied to the tokens to create the document feature matrix (dfm). As the dfm is a very sparse matrix containing the documents as rows and the terms as columns, I aggregate the data over all documents and sort the frequency of the terms in a descending order using the textstat_frequency() command. In addition, a special feature of the get_freqs function is the weighting parameter, which is set to FALSE per default. If it is being activated the frequencies are weighted according to the term-frequency inverse
-document frequency (tf.idf) weighting scheme. The theory behind this term weighting
-scheme is further explained in section B.3. In the end we apply the get_dfm function to
+document frequency (tf.idf) weighting scheme. This measures how important a word is to a document compared with a corpus of other documents, e.g. one short story in a collection of short stories.
+
+$idf(\text{term}) = \ln{\left(\frac{n_{\text{documents}}}{n_{\text{documents containing term}}}\right)}$
+
+In the end we apply the get_dfm function to
 the two corpora and save the result in the variable freqs_all and freqs_CHN respectively.
 
 # i have to remove ("interpretation from Chinese first actually)
@@ -297,6 +303,101 @@ freqs_all <- get_freqs(corp_meta_speeches,weighting = TRUE)
 We then get a new dataframe with each word, the frequency (percentage share of appearance of all words), the rank based on the frequency, the total document frequency of the words, the term_frequency and the inverse_term_frequency.
 
 
+
+
+Creating a dataframe which counts every word and shows that we have 13494 unique words in the dataframe used by China after deleting the stopwords.
+```{r}
+speech_words_CHN <- tidy_raw_words_CHN %>%
+ # unnest_tokens(word, text) %>%
+  count(word, sort = TRUE) |> 
+    mutate(total = sum(n))
+
+speech_words_CHN_per_speech <- tidy_raw_words_CHN %>%
+ # unnest_tokens(word, text) %>%
+  count(speech, word, sort = TRUE) |> #mit speech dann ist es per speech sortiert....
+    mutate(total = sum(n))
+```
+
+## Visualizing term frequency in China's speeches
+The graph shows the number of times a word appears in the speeches divided by the total number of terms (words) in the speeches. There are very long tails to the right for the Chinese speeches (those extremely rare words!) that I do not include in the plot. Many words occur rarely and few words occur frequently.
+```{r}
+
+ggplot(speech_words_CHN, aes(n/total)) +
+  geom_histogram(show.legend = FALSE) +
+  xlim(NA, 0.0009) +
+    labs(
+        title = "Term frequency distribtion in China's speeches",
+        subtitle = "Distribution of frequency of words divided by total words"
+    )
+#  facet_wrap(~book, ncol = 2, scales = "free_y")
+```
+
+
+The distribution we can see here is common in language. These long-tailed distributions are very common in natural language (like books, a lot of text from a website, or spoken words). Hence,  the relationship between the frequency that a word is used and its rank has been the subject of study. A famous version of this relationship is called Zipf’s law, after George Zipf, a 20th century American linguist. Zipf’s law states that the frequency that a word appears is inversely proportional to its rank @tidytext.
+
+```{r}
+freq_by_rank_CHN <- speech_words_CHN %>% 
+ # group_by(book) %>% 
+  mutate(rank = row_number(), 
+         `term frequency` = n/total) %>%
+  ungroup()
+
+head(freq_by_rank_CHN)
+```
+The rank column here tells us the rank of each word within the frequency table; the table was already ordered by n so we could use row_number() to find the rank. Then, we can calculate the term frequency in the same way we did before. Zipf’s law is often visualized by plotting rank on the x-axis and term frequency on the y-axis, on logarithmic scales. Plotting this way, an inversely proportional relationship will have a constant, negative slope.
+
+```{r}
+freq_by_rank_CHN %>% 
+  ggplot(aes(rank, `term frequency`)) + 
+  geom_line(size = 1.1, alpha = 0.8, show.legend = FALSE) + 
+  scale_x_log10() +
+  scale_y_log10() +
+    labs(
+        title = "Zipf's Law for China's speeches in the UNSC"
+    )
+#How could I plot the same for all speeches?
+```
+
+Notice that the Zipf's law figure is in log-log coordinates. We see that the relationship between rank and frequency does have a negative slope. It is not quite constant, though; perhaps we could view this as a broken power law. Let’s see what the exponent of the power law is for the middle section (between ranks 10 and 500) of the rank range [@tidytext].
+```{r}
+rank_subset <- freq_by_rank_CHN %>% 
+  filter(rank < 500,
+         rank > 10)
+
+lm(log10(`term frequency`) ~ log10(rank), data = rank_subset)
+```
+
+Classi versions of Zipf's law:
+$\text{frequency} \propto \frac{1}{\text{rank}}$
+
+```{r}
+freq_by_rank_CHN %>% 
+  ggplot(aes(rank, `term frequency`)) + 
+  geom_abline(intercept = -1.19, slope = -0.81, #take these numbers from the regression above
+              color = "red", linetype = 4) +
+  geom_line(size = 1.1, alpha = 0.8, show.legend = FALSE) + 
+  scale_x_log10() +
+  scale_y_log10() +
+    labs(
+        title = "Fitting an exponent for Zipf's Law with China's speeches in the UNSC")
+```
+We have found a result close to the classic version of Zipf’s law for the corpus of China's UNSC speeches. The deviations we see here at high rank are not uncommon for many kinds of language; a corpus of language often contains fewer rare words than predicted by a single power law. The deviations at low rank are more less unusual compared to the deviations from the fitted line at high rank. China uses a lower percentage of uncommon words than many collections of language, which may indicate the complexity of the diplomatic language.
+
+## The bind_tf_idf() function
+ The idea of tf-idf is to find the important words for the content of each document by decreasing the weight for commonly used words and increasing the weight for words that are not used very much in a collection or corpus of documents, in this case, the speeches by China in the UNSC. Calculating tf-idf attempts to find the words that are important (i.e., common) in a text, but not too common.
+ 
+The bind_tf_idf() function in the tidytext package takes a tidy text dataset as input. One column (word here) contains the terms/tokens, one column contains the documents (speech in this case), and the last necessary column contains the counts, how many times each speech contains each term (n in this example). I calculated a total for each speech for our explorations in previous sections, but it is not necessary for the bind_tf_idf() function; the table only needs to contain all the words in each speech.
+ 
+```{r}
+CHN_tf_idf <- speech_words_CHN_per_speech %>%  #89955 variables...
+  bind_tf_idf(word, speech, n)
+
+head(CHN_tf_idf)
+
+```
+ 
+ 
+ 
 # Sentiment Analysis
 
 For the sentiment analysis, I have to get dictionaries for my purpose into R. I choose to do a dictionary-based approach as I am a beginner in text analysis.  In accordance with processing of the speech data, we lower all dictionary terms so that the matching function is case sensitive.  Two wordlists namely Military and Cooperation are from the most widely used standard dictionary, the Harvard General Inquirer @GeneralInquirer. I manually collected this word list. It was difficult to obtain due to a restricted access. I create the new dataframe dict with these two categories after making all words to lower case letters.
@@ -540,6 +641,13 @@ CHN_sentiment_development <- grid.arrange(Cooperation_CHN, Military_CHN, Positiv
 
 
 
+
+
+
+
+
+
+
 # Topic Modelling
 For topic modelling we need to create document term matrices (dtm). Sparsity of a matrix refers to how many zeros it contains. It should contain one row for each speech given by China.
 With the cast_dtm commmand from the tidytext package, we can count each word in each speech and then creates a dtm from the word counts per speech.
@@ -553,6 +661,82 @@ dtm_review_CHN <- tidy_raw_words_CHN %>%   #assign dtm to tidy_CHN_dataframe
 dtm_review_CHN[1:4, 2000:2008] #this shows output for rows 1-4 and columns 2000-2008
 ```
 
+
+using Latent Dirichlet Allocation (LDA): 2 topics
+```{r}
+library(topicmodels)
+lda_out_CHN <- LDA( 
+  dtm_review_CHN, 
+  k = 2, 
+  method = "Gibbs", 
+  control = list(seed = 42) 
+) 
+
+glimpse(lda_out_CHN)
+```
+
+
+This gives a tibble of 26988 words that are assigned to two topics. beta gives the word probabilities...
+```{r}
+lda_topics_CHN <- lda_out_CHN %>%  
+ tidy(matrix = "beta") 
+lda_topics_CHN %>%  
+  arrange(desc(beta))
+```
+
+
+```{r}
+lda_out_CHN %>%  
+ tidy(matrix = "beta") 
+word_probs_CHN <- lda_topics_CHN %>%  
+  group_by(topic) %>%  # Keep the top 15 highest word probabilities by topic
+  top_n(15, beta) %>%  
+  ungroup() %>% 
+  mutate(term2 = fct_reorder(term, beta)) #this is a factor ordered by word probability
+```
+
+
+I obtain a graph that plots per topic the 15 words with the highest word probability (beta).
+For the first topic I would assing the topic model "problem-solving". For the second topic, I suggest the topic 
+```{r}
+# Plot term2 and the word probabilities
+ggplot(word_probs_CHN, aes(term2, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = F) +
+  # Facet the bar plot by topic
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+```
+
+## 3 topics
+```{r, include=FALSE}
+lda_topics_CHN3 <- LDA( 
+  dtm_review_CHN, 
+  k = 3, 
+  method = "Gibbs", 
+  control = list(seed = 42) 
+) |> 
+tidy(matrix = "beta") 
+word_probs_CHN3 <- lda_topics_CHN3 %>%  
+  group_by(topic) %>%  # Keep the top 15 highest word probabilities by topic
+  top_n(15, beta) %>%  
+  ungroup() %>% 
+  mutate(term2 = fct_reorder(term, beta))
+```
+
+Now, we can see the results when we run three topic models...
+```{r, echo=FALSE}
+ggplot( 
+  word_probs_CHN3,  
+  aes( 
+    term2,  
+    beta,  
+    fill = as.factor(topic) 
+  ) 
+) + 
+  geom_col(show.legend = FALSE) + 
+  facet_wrap(~ topic, scales = "free") + 
+  coord_flip() 
+```
 
 \newpage
 
