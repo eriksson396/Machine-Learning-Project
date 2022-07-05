@@ -673,6 +673,7 @@ CHN_sentiment_development <- grid.arrange(Cooperation_CHN, Military_CHN, Positiv
 
 
 # Topic Modelling
+Next, I want to divide the speeches into natural groups so that we can draw conclusion from them separately. Topic modeling belongs to the subgroup of unsupervised classification of documents such as speeches in my case. This is akin to clustering numeric data where natural groups are formed even in the non-existence of them.
 For topic modelling we need to create document term matrices (dtm). Sparsity of a matrix refers to how many zeros it contains. It should contain one row for each speech given by China.
 With the cast_dtm commmand from the tidytext package, we can count each word in each speech and then creates a dtm from the word counts per speech.
 
@@ -686,7 +687,10 @@ dtm_review_CHN[1:4, 2000:2008] #this shows output for rows 1-4 and columns 2000-
 ```
 
 
-using Latent Dirichlet Allocation (LDA): 2 topics
+
+Latent Dirichlet allocation (LDA) is commonly used method for fitting topic models. LDA is based on two principles: First, each document (speech) is treated as a mixture of topics and, secondly,  each topics a mixture of words. This means that each document (speech) may contain certain proportions of each topic and each word may appear in both topics. LDA estimates both of these simultaneously. Finding the combination of words that may be associated with both (or several) topics, but also finding the combination of topics that best explains each document (speech). This gives the possibility that speeches may have similar content eventually and not being treated as separate entities, which mimics the natural use of human natural language [@tidytext].
+
+## Using Latent Dirichlet Allocation (LDA): Two topics
 ```{r}
 library(topicmodels)
 lda_out_CHN <- LDA( 
@@ -731,7 +735,7 @@ ggplot(word_probs_CHN, aes(term2, beta, fill = as.factor(topic))) +
   coord_flip()
 ```
 
-## 3 topics
+## Three topics LDA
 ```{r, include=FALSE}
 lda_topics_CHN3 <- LDA( 
   dtm_review_CHN, 
