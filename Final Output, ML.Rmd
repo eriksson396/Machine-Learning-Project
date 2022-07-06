@@ -458,8 +458,8 @@ return(data)
 <table>
 <caption><span id="tab:table2">Table 1.2: </span>Test table 2.</caption>
 
-Column 1       Column 2   dfsafdsafdsaf  dfadsf      fdfdsafa  dfdsafa
--------------  ---------  -------------  ----------  --------  -------
+Military       Cooperation   Positive  Uncertainty      Strong modal  Weakmodal
+------------  -------------  -------------  ----------  --------  -------
 lorem          ipsum      fdsa           fdsaf       dsdf      dsaf
 dolor          sit
 
@@ -750,10 +750,12 @@ head(lda_document_CHN)
 ```
  The values are estimates of the share of words from a speech that are generated from the respective topic. Here the model estimates that for example 40% of the words in speech number 10 were generated from topic 1, while for speech number 2 the percentage amounts to 68. We can state that all speeches were drawn from a mix of the two topics, but to a different extent. Document 28 had the lowest $gamma$ value suggesting that it was majorily drawn from topic 2, having a γ from topic 1 closer to zero (0.17). Therefore, I tidy() the document-term matrix and check what the most common words in that document were.
 
-```{r}
-tidy(dtm_review_CHN) %>%
-  filter(document == 28) %>%
+```{r, eval=FALSE}
+doc28 <- tidy(dtm_review_CHN) %>%
+  dplyr::filter(document == 28) %>%
   arrange(desc(count))
+
+doc28  #code words but does not knit
 ```
 
 The words appear to be very general words most likely about efforts to restore peace and security for certain conflict, which fits well with topic 2 which I labelled as "Cooperation".
