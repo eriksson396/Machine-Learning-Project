@@ -25,15 +25,16 @@ My paper will solely focus on unsupervised machine learning methods that are app
 First of all, I present all relevant data sources and explain essential features to get a
 proper overview. Afterwards, I explain the process of loading the data into R and how
 we process the raw text corpus, to obtain meaningful results.\newline
-For our empirical analysis we use three main data sources. The main data set comprises UN Security Council debates between January 1995 and December 2020 and was downloaded from @UNSC. The official meeting protocols are split into distinct speeches. For every speech, metadata regarding the speaker, the speaker's nation or affiliation, and the speaker's role in the meeting is given. The topic of the meeting is also given. In total, the corpus contains 82,165 speeches extracted from 5,748 meeting protocols. The download file of @UNSC also provides a code book with the exact description of their workflow how to set-up the database as well as a detailed variable description.
+For the empirical analysis we use three main data sources. The main data set comprises UN Security Council debates between January 1995 and December 2020 and was downloaded from @UNSC. The official meeting protocols are split into distinct speeches. For every speech, metadata regarding the speaker, the speaker's nation or affiliation, and the speaker's role in the meeting is given. The topic of the meeting is also given. In total, the corpus contains 82,165 speeches extracted from 5,748 meeting protocols. The download file of @UNSC also provides a code book with the exact description of their workflow how to set-up the database as well as a detailed variable description.
 \newline
 The data are split in to a file containing all information about the UNSC meetings, one file about the metadata of the speeches and one file containing the whole text of the speeches.
-The other two data sources are word dictionaries for the sentiment analysis. It is crucial for the sentiment analysis, that the dictionaries are suitable for the specific context of analysis. For example, a word list developed for sociology may not be a good fit to analyze text data from for ﬁnance, and vice versa. The selection of the right word lists is therefore of uttermost importance to get meaningful and robust results @grimmer2013[pp. 274-275]. Hence, I carefully choose only certain categories from the dictionaries which are less prone to missclassiﬁcation. Two wordlists namely Military
-and Cooperation are from the most widely used standard dictionary, the Harvard General Inquirer (see @GeneralInquirer). The other four wordlists: Positive, Uncertainty, Strong Modal and Weak Modal are from @Loughran. Word categories that were specially adapted to the ﬁnancial context by Loughran and McDonald (2011), such as the negative wordlist, are neglected in my analysis.
+The other two data sources used for are word dictionaries for the sentiment analysis. I decided to apply a dictionary-based sentiment analysis which allows me to evaluate the sentiment of the speech data based on signalling words. The alternative would be a data-driven corpus approach, which is however more sophisticated and not further pursued here. It is crucial for the sentiment analysis, that the dictionaries are suitable for the specific context of analysis. For example, a word list developed for sociology may not be a good fit to analyze text data from for ﬁnance, and vice versa. The selection of the right word lists is therefore of uttermost importance to get meaningful and robust results @grimmer2013[pp. 274-275].
+Hence, I carefully choose only certain categories from the dictionaries which are less prone to missclassiﬁcation. Two wordlists namely Military and Cooperation are from the most widely used standard dictionary, the Harvard General Inquirer (see @GeneralInquirer). The other four wordlists: Positive, Uncertainty, Strong Modal and Weak Modal are from @Loughran. Word categories that were specially adapted to the ﬁnancial context by @Loughran, such as the negative wordlist, are neglected in my analysis.
 
 ## Data preparation
 In the next step, I import the speech data into R from the data folder of my project file. To be able to process larger amounts of text, I need special packages in R. These include the quanteda, quanteda.textplot and quanteda.textstats. Other libraries like tidyverse, magrtittr, dyplr, ggplot2, readtext, and kableExtra are used to manipulate the data and plot it. We also set a seed, so that our results are reproducible.
 ```{r, echo=TRUE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
 #load required packages
 library(tidyverse)
 library(readtext)
@@ -53,11 +54,7 @@ load("data/docs.RData")
 
 #set a seed for reproducability
 set.seed(2333)
-# View data
-#head(meta_meetings)
-#head(meta_speeches)
 ```
-
 
 I then rename the filename column of the data frame containing the metadata of the speeches into doc_id in order to have a common identifier for merging with the actual text data from the speeches (raw_docs).
 ```{r}
@@ -70,7 +67,8 @@ meta_speeches <- meta_speeches %>%
 meta_speeches <- merge(meta_speeches, raw_docs, by = 'doc_id')
 ```
 
-In the next step I want to make a corpus from my data. The command corpus comes from the quanteda package. Hence, the text column of the meta_speeces dataframe are now a corpus. I ﬁlter out speeches from the president of the UNSC, as he or she mostly speaks on behalf of the organization and not for their respective country. This reduces the number of speeches by about 30,000 to 50,933.
+In the next step I want to make a corpus from my data. A corpus is the a certain data structure before the tokenization of the text data. It includes document-level variables that are unique to each data point of text, as well as meta-data for documents and for the collection as a whole.
+The command corpus comes from the quanteda package. Hence, the text column of the meta_speeches data frame are now a corpus. I ﬁlter out speeches from the president of the UNSC, as he or she mostly speaks on behalf of the organization and not for their respective country. This reduces the number of speeches by about 30,000 to 50,933 speeches.
 
 ```{r}
 #as_corpus_frame(meta_speeches$text, filter = NULL, row.names = NULL)
@@ -78,8 +76,8 @@ corp_meta_speeches <- corpus(meta_speeches, text_field = "text")
 summary(corp_meta_speeches, 1)
 corp_meta_speeches <- corpus_subset(corp_meta_speeches, participanttype != "The President")
 ```
-
-I also create a unique corpus just for the speeches held by China. I do this using the corpus_subset command from my previously defined corpus. I also take a subset of the meta_speeches dataframe with only the speeches from China. In total there are 3564 speeches by China in the dataframe, a total share of 3.82% of all speeches. So there appear to be 1619 speeches from China as participant type president. So, the speeches where china speaks on behalf of the president are excluded.
+The summary shows one example of how one observation of the corpus looks like. It has 22 variables and exhibits information on the topics of the speech, speech length, speaker and the link to the speech itself among other variables. I suggest the code book of @UNSC for the exact variable descriptions.
+I also create a unique corpus just for the speeches held by China. I do this using the corpus_subset command from my previously defined corpus. I also take a subset of the meta_speeches data frame with only the speeches from China. In total there are 3564 speeches by China in the data frame, a total share of 3.82% of all speeches. So there appear to be 1619 speeches from China as participant type president. So, the speeches where China speaks on behalf of the president are excluded.
 ```{r}
 #How do I assign the speeches to the columns (now the speeches are in the same order as in the document, but not tied to the countries)
 
@@ -101,9 +99,9 @@ head(docvars(corp_China))
 #corp_China$avg_speech_length <- (mean(corp_China$sentences))
 #avg_speech_length
 ```
-
+We an see the meta data of the China corpus inclusing the names of the speakers, the reference to the speech data file, the topic etc., as described above.
 As a next step, I separate the whole speeches into sentences in tidy format. One column for every sentence of a speech. For that I use the unnest_tokens function from the tidytext package. This lets the the number of observations grow to 1,767,696 million. The problem here is that now after every salutation like "Mr.", so after every point the function creates a new sentence.
-When we create a dataframe for every word as an observation, the number of observation grows to 43,534,652 million. Therefore, we must clean the data further before using them for analysis.
+When we create a data frame for every word as an observation, the number of observation grows to 43,534,652 million. Therefore, we must clean the data further before using them for analysis.
 ```{r}
 ##separates by default into words all speeches from raw docs (here by sentences) variable after tokens
 tidy_raw_sentences <- meta_speeches %>%
@@ -114,7 +112,7 @@ tidy_raw_words <- meta_speeches |>
     unnest_tokens(word, text)
 ```
 
-The tidytext package also come with a list of stop words -- words that are not meaningful and that we want to exclude from the analysis. The stop words list contains 1149 words. Our data frame reduces to 19,623,316 million observations -- by more than a half. This allows me to start with a first analysis. I can plot the most frequent words used in the speeches of the UNSC. For that, I plot the most common words that were used more than 80,000 times in total. The threshold of 65,000 is subjectively chosen and is based on the graphical aesthetics.
+The tidytext package also come with a list of stop words -- words that are not meaningful and that we want to exclude from the analysis. The stop words list contains 1149 words. Our data frame reduces to 19,623,316 million observations -- by more than a half. 
 
 ```{r, echo=TRUE, message=FALSE}
 ##remove redundant words (reduces from 47,6 Mio words to 21,4 Mio words)
@@ -126,13 +124,15 @@ tidy_raw_words <- tidy_raw_words %>%
 ##count words, after redundant words were removed (only meaningful words)
 # tidy_raw_words %>%
 #   count(word, sort = TRUE)
-
 ```
-# A first visual inspection of the most commonly used words
+
+This allows me to start with a first analysis. I can plot the most frequent words used in the speeches of the UNSC. For that, I plot the most common words that were used more than 65,000 times in total. The threshold of 65,000 is subjectively chosen and is based on the graphical aesthetics.
+
+# Most commonly used words
 
 We can see from the graph that council, security and united are the most frequently used words. This gives are first overview of the most used words.
 
-```{r, echo=FALSE, message=FALSE}
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Most common words in UNSC.\\label{Figure1}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 ##plotting most common words (mit mehr als 80.000 Wörtern)
 library(scales)
 most_common_words_UNSC <- tidy_raw_words %>%
@@ -148,8 +148,9 @@ scale_x_continuous(labels = comma_format(big.mark = ".",
  
  most_common_words_UNSC
 ```
-I also plot the 40 most common words from the UNSC in a wordcloud.
-```{r, message=FALSE}
+I also plot the exact same information of the 40 most common words from the UNSC in a visually appealing wordcloud using the wordcloud package.
+
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Wordcloud of most common words in UNSC.\\label{Figure2}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 # Load the wordcloud package
 library(wordcloud)
 
@@ -167,7 +168,9 @@ wordcloud(
   colors = "blue"
 )
 ```
-I then apply the same analysis for the data frame from the Chinese speeches.
+
+I then apply the exact same analysis for the data frame from the Chinese speeches.
+
 ```{r, include=FALSE}
 #same analysis for Chinese speeches....
 ##separates by default into words all speeches from raw docs (here by sentences)
@@ -190,11 +193,10 @@ tidy_raw_words_CHN <- tidy_raw_words_CHN %>%
 tidy_raw_words_CHN %>%
   count(word, sort = TRUE)
 ```
+We can see that China's five most commonly used words are the same as for the UNSC, except that its country name is the most used words. This is not surprising as country's commonly hold speeches referring to them with their country name.
 
-
-```{r, echo=FALSE}
-##plotting most common wordsChina (mit mehr als 3.000 Wörtern)
-
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Most common words used by China.\\label{Figure3}", fig.ext = 'png', fig.height = 5, fig.width = 7}
+##plotting most common words
 most_common_CHN <- tidy_raw_words_CHN %>%
   count(word, sort = TRUE) %>%
   filter(n > 2500) %>%
@@ -207,8 +209,10 @@ most_common_CHN <- tidy_raw_words_CHN %>%
 most_common_CHN
 ```
 
-Additionally, I visualize the 40 most common words in a wordcloud using the wordcloud package.
-```{r, message=FALSE}
+
+Again, I visualize the 40 most common words used by China in a wordcloud using the wordcloud package.
+
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Wordcloud most common words used by China.\\label{Figure4}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 # Load the wordcloud package
 library(wordcloud)
 
@@ -226,24 +230,20 @@ wordcloud(
   colors = "red"
 )
 ```
-A central question in text mining and natural language processing is how to quantify what a document is about. One measure of how important a word may be is its term frequency (tf), how frequently a word occurs in a document.
+Next, we want to get further than just plotting the most frequently used words. A central question in text mining and natural language processing is how to quantify what a document is about. One measure of how important a word may be is its term frequency (tf), how frequently a word occurs in a document. \newpage
 
 # Frequency terms
 Next, I calculate frequency terms. The function get_freqs creates a list of the frequency of terms that appear in each speech. The function takes the respective corpus as an input and returns the frequencies in the form of a data frame. In the ﬁrst step, it creates tokens from the text documents. Tokens are a sequence of elementary lexical components, in our case words. Punctuation, separators and stop words like “he”, “do”, or “if” are excluded as they have no meaning for the content and therefore represent no real added value for the analysis.
-The dfm() function is then applied to the tokens to create the document feature matrix (dfm). As the dfm is a very sparse matrix containing the documents as rows and the terms as columns, I aggregate the data over all documents and sort the frequency of the terms in a descending order using the textstat_frequency() command. In addition, a special feature of the get_freqs function is the weighting parameter, which is set to FALSE per default. If it is being activated the frequencies are weighted according to the term-frequency inverse
-document frequency (tf.idf) weighting scheme. This measures how important a word is to a document compared with a corpus of other documents, e.g. one short story in a collection of short stories.
+The dfm() function is then applied to the tokens to create the document feature matrix (dfm). As the dfm is a very sparse matrix containing the documents as rows and the terms as columns, I aggregate the data over all documents and sort the frequency of the terms in a descending order using the textstat_frequency() command. In addition, a special feature of the get_freqs function is the weighting parameter, which is set to FALSE per default. If it is being activated the frequencies are weighted according to the term-frequency inverse document frequency (tf.idf) weighting scheme. This measures how important a word is to a document compared with a corpus of other documents, e.g. one speech in a collection of speeches. The inverse document frequency of a term is defined as:
 
 $idf(\text{term}) = \ln{\left(\frac{n_{\text{documents}}}{n_{\text{documents containing term}}}\right)}$
 
-In the end we apply the get_dfm function to
-the two corpora and save the result in the variable freqs_all and freqs_CHN respectively.
+In the end we apply the get_dfm function to the two corpora and save the result in the variable freqs_all and freqs_CHN respectively.
 
 ```{r}
 #calculate the frequency of terms that appear in each speech. It also creates a document feature matrix.
 #frequency of each word in the corpus
-# function takes the respective corpus as an input and returns the frequencies in the form of a data frame
-
-
+#function takes the respective corpus as an input and returns the frequencies in the form of a data frame
 get_freqs <- function(corp_meta_speeches, weighting = TRUE){
 tokens <- tokens(corp_meta_speeches, remove_punct = T, remove_separators = T, include_docvars = T)
 tokens <- tokens_remove(tokens, stopwords("en"))
@@ -264,9 +264,10 @@ freqs_all <- get_freqs(corp_meta_speeches,weighting = TRUE)
 
 #Mr. und Mrs. is still inside, maybe you can research something on the gender of the diplomats
 ```
-We then get a new dataframe with each word, the frequency (percentage share of appearance of all words), the rank based on the frequency, the total document frequency of the words, the term_frequency and the inverse_term_frequency.
+We then get a new data frame with each word, the frequency (percentage share of appearance of all words), the rank based on the frequency, the total document frequency of the words, the term_frequency and the inverse_term_frequency. We will come back and make use of this at a later stage.
 
-Creating a dataframe which counts every word and shows that we have 13494 unique words in the dataframe used by China after deleting the stopwords.
+I also create a data frame which counts usage of every word in all speeches. This shows that we have 13494 unique words in the data frame used by China after deleting the stop words. I do the same but count the frequency for every word used by China by speech. I will use these newly created data frames for my subsequent \ref{Figure5}.
+It should be noted here that I only further proceed with the corpus for the Chinese speeches giving the scope limitations of this project. Nevertheless, it would be interesting to pursue an in depth comparison of the general UNSC language compared to China's use of language. I solely put my attention to the Chinese speeches in the following while keeping the confidence to draw meaningful conclusions from the analysis.
 ```{r}
 speech_words_CHN <- tidy_raw_words_CHN %>%
  # unnest_tokens(word, text) %>%
@@ -275,25 +276,25 @@ speech_words_CHN <- tidy_raw_words_CHN %>%
 
 speech_words_CHN_per_speech <- tidy_raw_words_CHN %>%
  # unnest_tokens(word, text) %>%
-  count(speech, word, sort = TRUE) |> #mit speech dann ist es per speech sortiert....
+  count(speech, word, sort = TRUE) |>   ##now sorted by speech
     mutate(total = sum(n))
 ```
 
 ## Visualizing term frequency in China's speeches
-The graph shows the number of times a word appears in the speeches divided by the total number of terms (words) in the speeches. There are very long tails to the right for the Chinese speeches (those extremely rare words!) that I do not include in the plot. Many words occur rarely and few words occur frequently.
-```{r}
+The graph shows the number of times a word appears in the speeches divided by the total number of terms (words) in the speeches. There are very long tails to the right for the Chinese speeches (those are extremely rare words) that I do not include in the plot. Many words occur rarely and few words occur frequently.
 
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Term frequency distribution in China's speeches.\\label{Figure5}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 ggplot(speech_words_CHN, aes(n/total)) +
   geom_histogram(show.legend = FALSE) +
   xlim(NA, 0.0009) +
     labs(
-        title = "Term frequency distribtion in China's speeches",
+        title = "Term frequency distribution in China's speeches",
         subtitle = "Distribution of frequency of words divided by total words"
     )
 #  facet_wrap(~book, ncol = 2, scales = "free_y")
 ```
 
-The distribution we can see here is common in language. These long-tailed distributions are very common in natural language (like books, a lot of text from a website, or spoken words). Hence,  the relationship between the frequency that a word is used and its rank has been the subject of study. A famous version of this relationship is called Zipf’s law, after George Zipf, a 20th century American linguist. Zipf’s law states that the frequency that a word appears is inversely proportional to its rank @tidytext.
+The distribution we can see here is common in language. These long-tailed distributions are very common in natural language (like books, a lot of text from a website, or spoken words). Hence,  the relationship between the frequency that a word is used and its rank has been the subject of study. A famous mathematical approach to this area is called Zipf’s law. It is named after George Zipf, a 20th century American linguist. Zipf’s law states that the frequency that a word appears is inversely proportional to its rank @tidytext. Words occur in a systematic frequency distribution with very few words used very frequently and a plethora of words used less frequent. This distribution follow a power law called Zipf's law @zipf. I proceed by calculating the rank of each word and its frequency.
 
 ```{r}
 freq_by_rank_CHN <- speech_words_CHN %>% 
@@ -303,11 +304,12 @@ freq_by_rank_CHN <- speech_words_CHN %>%
 
 head(freq_by_rank_CHN)
 ```
-The rank column here tells us the rank of each word within the frequency table; the table was already ordered by n so we could use row_number() to find the rank. Then, we can calculate the term frequency in the same way we did before. Zipf’s law is often visualized by plotting rank on the x-axis and term frequency on the y-axis, on logarithmic scales. Plotting this way, an inversely proportional relationship will have a constant, negative slope.
 
-### Zipf's law
+The rank column here tells us the rank of each word within the frequency table; the table was already ordered by n so we could use row_number() to find the rank. Then, we can calculate the term frequency in the same way we did before. Zipf’s law is often visualized by plotting rank on the x-axis and term frequency on the y-axis, on logarithmic scales. Plotting it in this way, an inversely proportional relationship, will have a constant, negative slope.
 
-```{r}
+## Zipf's law visualization
+
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Simple Zipf's law in China's speeches.\\label{Figure6}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 freq_by_rank_CHN %>% 
   ggplot(aes(rank, `term frequency`)) + 
   geom_line(size = 1.1, alpha = 0.8, show.legend = FALSE) + 
@@ -316,10 +318,10 @@ freq_by_rank_CHN %>%
     labs(
         title = "Zipf's Law for China's speeches in the UNSC"
     )
-#How could I plot the same for all speeches?
 ```
 
-Notice that the Zipf's law figure is in log-log coordinates. We see that the relationship between rank and frequency does have a negative slope. It is not quite constant, though; perhaps we could view this as a broken power law. Let’s see what the exponent of the power law is for the middle section (between ranks 10 and 500) of the rank range [@tidytext].
+We keep in mind here that the Zipf's law figure is in log-log coordinates. We see that the relationship between rank and frequency does have the expected negative slope. It is not quite constant, though; perhaps we could view this as a broken power law. Let’s see what the exponent of the power law is for the middle section (between ranks 10 and 500) of the rank range [see @tidytext]. I further regress the log of the term frequency on the rank for the data between the ranks of 10 to 500 and fit a line with the respective intercept and coefficient in \ref{Figure6}.
+
 ```{r}
 rank_subset <- freq_by_rank_CHN %>% 
   filter(rank < 500,
@@ -328,10 +330,13 @@ rank_subset <- freq_by_rank_CHN %>%
 lm(log10(`term frequency`) ~ log10(rank), data = rank_subset)
 ```
 
-Classi versions of Zipf's law:
+The classic versions of Zipf's law can be expressed as follows:
 $\text{frequency} \propto \frac{1}{\text{rank}}$
 
-```{r}
+The r-th most frequent word has a frequency that scales according to the above formula. The frequency rank is the r-th most frequent words and frequency is the frequency of a word in a natural corpus (speech in our case). 
+
+
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Fitted exponent for Zipf's law for Chinese speeches.\\label{Figure7}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 freq_by_rank_CHN %>% 
   ggplot(aes(rank, `term frequency`)) + 
   geom_abline(intercept = -1.19, slope = -0.81, #take these numbers from the regression above
@@ -342,12 +347,13 @@ freq_by_rank_CHN %>%
     labs(
         title = "Fitting an exponent for Zipf's Law with China's speeches in the UNSC")
 ```
-We have found a result close to the classic version of Zipf’s law for the corpus of China's UNSC speeches. The deviations we see here at high rank are not uncommon for many kinds of language; a corpus of language often contains fewer rare words than predicted by a single power law. The deviations at low rank are more less unusual compared to the deviations from the fitted line at high rank. China uses a lower percentage of uncommon words than many collections of language, which may indicate the complexity of the diplomatic language.
+
+We have found a result close to the classic version of Zipf’s law for the corpus of China's UNSC speeches. The deviations we see here at high rank are not uncommon for many kinds of language; a corpus of language often contains fewer rare words than predicted by a single power law. The deviations at low rank are more unusual compared to the deviations from the fitted line at high rank. China uses a lower percentage of uncommon words than many collections of language, which may indicate the complexity of the diplomatic language [see @diplo].
 
 ## The bind_tf_idf() function
- The idea of tf-idf is to find the important words for the content of each document by decreasing the weight for commonly used words and increasing the weight for words that are not used very much in a collection or corpus of documents, in this case, the speeches by China in the UNSC. Calculating tf-idf attempts to find the words that are important (i.e., common) in a text, but not too common.
+The idea of tf-idf is to find the important words for the content of each document by decreasing the weight for commonly used words and increasing the weight for words that are not used very much in a collection of documents, in this case, the speeches by China in the UNSC. Calculating tf-idf attempts to find the words that are important (i.e., common) in a text, but not too common.
  
-The bind_tf_idf() function in the tidytext package takes a tidy text dataset as input. One column (word here) contains the terms/tokens, one column contains the documents (speech in this case), and the last necessary column contains the counts, how many times each speech contains each term (n in this example). I create a new dataframe for this, as the bind_tf_idf function requires a document entry (speeches in my case). 
+The bind_tf_idf() function in the tidytext package takes a tidy text data set as input. One column (word here) contains the terms/tokens, one column contains the documents (speech in this case), and the last necessary column contains the counts, how many times each speech contains each term (n in this example). I create a new data frame for this, as the bind_tf_idf function requires a document entry (speeches in my case). 
  
 ```{r}
 CHN_tf_idf <- speech_words_CHN_per_speech %>%  #89955 variables...
@@ -382,7 +388,6 @@ high_tf_idf_CHN <- data.frame(speech=c('110', "129", '129', '51', "129", "51"),
 head(high_tf_idf_CHN)
 ```
 
- 
 ```{r, include=FALSE}
 library(forcats)
 
@@ -395,10 +400,10 @@ CHN_tf_idf %>%
   facet_wrap(~speech, ncol = 1, scales = "free") +
   labs(x = "tf-idf", y = NULL)
 ```
- 
+\newpage
 # Sentiment Analysis
 
-For the sentiment analysis, I have to get dictionaries for my purpose into R. I choose to do a dictionary-based approach as I am a beginner in text analysis.  In accordance with processing of the speech data, we lower all dictionary terms so that the matching function is case sensitive.  Two wordlists namely Military and Cooperation are from the most widely used standard dictionary, the Harvard General Inquirer @GeneralInquirer. I manually collected this word list. It was difficult to obtain due to a restricted access. I create the new dataframe dict with these two categories after making all words to lower case letters.
+For the sentiment analysis, I have to get dictionaries for my purpose into R. I choose to do a dictionary-based approach as I am a beginner in text analysis.  In accordance with processing of the speech data, we lower all dictionary terms so that the matching function is case sensitive.  Two wordlists, namely Military and Cooperation are from the most widely used standard dictionary, the Harvard General Inquirer @GeneralInquirer. I manually collected this word list and saved them in an excel file. It was difficult to obtain due to restricted access. I create the new data frame called "dict" with these two categories after making all words to lower case letters.
 
 ```{r}
 library(readxl)
@@ -412,11 +417,10 @@ dict <- GI_dic |>
     select(military, powercoop)  
 ```
 
-The second dictionary I am using is the one by @Loughran. From this I append the wordlists "Positive, "Uncertainty", "Strongmodal" and "Weakmodal" to my dict.
+The second dictionary I am using is the one by @Loughran. From this I append the wordlists "Positive, "Uncertainty", "Strongmodal" and "Weakmodal" to my dictionary.
 
 ```{r}
 loughran <- read_excel("~/ownCloud/Uni Göttingen/Stellenbosch University/Data Science Methods/Github Projects/Machine Learning Project/data/LoughranMcDonald_SentimentWordLists_2018.xlsx")
-
 
 colnames(loughran) <- tolower(colnames(loughran))
 # Select the following 4 categories for my analysis, exclude negative inter alia
@@ -456,18 +460,21 @@ return(data)
 
 
 <table>
-<caption><span id="tab:table2">Table 1.2: </span>Test table 2.</caption>
+<caption><span id="tab:table2">Table: </span>Selected words from the dictionary.</caption>
 
-Military       Cooperation   Positive  Uncertainty      Strong modal  Weakmodal
-------------  -------------  -------------  ----------  --------  -------
-lorem          ipsum      fdsa           fdsaf       dsdf      dsaf
-dolor          sit
+Military       Cooperation     Positive      Uncertainty      Strong modal     Weak modal
+------------  -------------  -------------  --------------   ---------------  -----------
+Weapon        Peace          Strengthen     Variation        Always           Apparently
+Fleet         Joint          Stabilize      Unknown          Best             Depending
+Ammunition    Partnership    Progress       Perhaps          Strongly         Might
+War           Mediation      Improve        Appear           Unparalleled     Possible
+Troop         Consensus      Prosperity     Conditional      Undisputed       Sometimes
 
 </table>
 
-My self-created tidy dictionary contains two columns with 863 words and 5 sentiment categories in total. 88 words belong to the Cooperation wordlist (e.g. "co-opeation"), 79 to the Military wordlist (e.g. "army"), 353 to the Positive wordlist (e.g. "accomplishment"), 19 to the strong modal wordlist (e.g. "undisputed"), 297 to the uncertainty wordlist (e.g. "ambiguity") and 27 to the weak modal wordlist (e.g. "apparently".
+My self-created tidy dictionary contains two columns with 863 words and six sentiment categories in total. 88 words belong to the Cooperation word list, 79 to the Military word list, 353 to the Positive word list, 19 to the strong modal word list, 297 to the uncertainty word list and 27 to the weak modal word list. The table above gives examples of the words the sentiment categories comprise of.
 
-```{r, echo=FALSE}
+```{r, echo=TRUE, results='hide'}
 ##also create a tidy dictionary, we I have 863 words with 5 sentiment categories in total
 tidy_dict <- dict %>% tidyr::gather("Sentiment", value, 1:6) |> 
     rename(word = value) |> 
@@ -482,8 +489,9 @@ words_per_sentiment <- tidy_dict |>
    count(Sentiment)
 ```
 
+Next, present my dictionary also graphically in \ref{Figure8}. By far most of my sentiment indicating words are in the "positive" and "uncertainty" category. 
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Sentiment Counts per sentiment in my dictionary.\\label{Figure8}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 
-```{r}
 sentiment_counts <- tidy_dict %>%  
   count(Sentiment) %>%  
  mutate(sentiment2 = fct_reorder(Sentiment, n)) 
@@ -499,7 +507,8 @@ ggplot(sentiment_counts, aes(x = sentiment2, y = n)) +
 ```
 
 ## Join the dictionary with the speech data
-I create a new dataframe using the inner_join function that appends the my sentiment dictionary in tidy format to the dataframe from China containing all words. I can then see that out of the 522,480 words used by China, 44,588 match to my dictionary (8.53%). I then mutate a new column which calculates the share of the sentiment used. For China, we can see that 38.07% of the sentiments fall into the cooperation wordlist, 10% in the military wordlist, 47.86% in the Positive sentiment wordlist, 3.28% in the uncertainty wordlist and very small shares in the strongmodal and weakmodal categories. What is apparent at first is that, altough the uncertainty wordlist has a multiple times higher share on the words in my dictionary, it is the reverse in the share of sentiments in China's speeches.
+For the sentiment, analysis I want to evaluate the sentiment of the words of the speech corpus. Hence, I create a new data frame using the inner_join function that appends the my sentiment dictionary in tidy format to the data frame from China containing all words. I can then see that out of the 522,480 words used by China, 44,588 match to my dictionary (8.53%). I then mutate a new column which calculates the share of the sentiment used. For China, we can see that 38.07% of the sentiments fall into the cooperation word list, 10% in the military word list, 47.86% in the Positive sentiment word list, 3.28% in the uncertainty word list and very small shares in the strongmodal and weakmodal categories. 
+What is apparent at first is that, although the uncertainty word list has a multiple times higher share on the words in my dictionary, it is the reverse in the share of sentiments in China's speeches.
 
 ```{r}
 sentiment_review_CHN <- tidy_raw_words_CHN |> 
@@ -509,7 +518,7 @@ sentiment_review_CHN |>
     mutate(share_sentiment_category = n/44588)
 ```
 
-We can further see the most words that appear both in my dictionary and in China's speeches. The high share of the cooperation sentiment is driven by the very frequent use of the word "peace" (7095 times). This is followed by the words cooperation, stability, strenghten, achieve and progress in descending order.
+We can further see the most words that appear both in my dictionary and in China's speeches. The high share of the cooperation sentiment is driven by the very frequent use of the word "peace" (7095 times). This is followed by the words cooperation, stability, strengthen, achieve and progress in descending order.
 
 ```{r}
 sentiment_review_CHN |> 
@@ -518,8 +527,8 @@ sentiment_review_CHN |>
     head()
 ```
 
-# Visualizing sentiments
-
+## Visualizing sentiments
+First, I count the most common words in the speech that match the six respective sentiment word list. I group them by sentiment and filter the ten most common words for each category and order them in descending order.
 ```{r}
 #sentiment_review_CHN2 <- sentiment_review %>%  
  # filter(sentiment %in% c("positive", "negative"))  
@@ -533,8 +542,9 @@ word_counts_CHN2 <- sentiment_review_CHN %>%
   )
 ```
 
-In this graph, I visualized the sentiments of each of the six categories, so that we can see the most common words for each category.
-```{r}
+In this graph, I visualized the sentiments of each of the six categories, so that we can see the most common words for each category. In the Cooperation sentiment word list, the word peace appears by far the most with more than 6000 appearances. from the military word list, "armed", "force" and "draft" are most used. An interesting results is that while my dictionary consists by far more words from the uncertainty list than the military list, the sentiment words counts from China's speeches from the military list by far exceed the ones from the uncertainty list. This could indicate that China uses a more aggressive military jargon. But it could also be the case that the military dictionary is simply fitting the context of the UNSC speeches better than the uncertainty word list.
+
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Sentiment word counts for Chinese speeches.\\label{Figure9}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 ggplot(word_counts_CHN2, aes(x = word2, y = n, fill = Sentiment)) + 
   geom_col(show.legend = FALSE) + 
   facet_wrap(~ Sentiment, scales = "free") + 
@@ -545,7 +555,7 @@ ggplot(word_counts_CHN2, aes(x = word2, y = n, fill = Sentiment)) +
   )
 ```
 
-## can we count sentiments by year?
+## Chinese sentiments over time
 The following gives a table of the counts of the sentiments by Year.
 
 ```{r}
@@ -554,7 +564,7 @@ sentiment_over_time_CHN <- sentiment_review_CHN |>
     spread(Sentiment, n) 
 ```
 
-We can also plot this nicely in a graph, which shows the number of the sentiment words used over time for each of the six sentiment categories.
+We can also plot this nicely in a graph, which shows the number of the sentiment words used over time for each of the six sentiment categories. For this I plot a graph over time for each of the six sentiment categories, whose code I do not show here.
 
 ```{r, include=FALSE}
 Military_CHN <- ggplot( 
@@ -637,12 +647,16 @@ Weakmodal_CHN <- ggplot(
 
 ```
 
+I then use the gridExtra package to display the individually created graphs in one graph.
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Sentiment over time used by China.\\label{Figure10}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 #one line of code to put the pictures in one graph
 library(gridExtra)
 CHN_sentiment_development <- grid.arrange(Cooperation_CHN, Military_CHN, Positive_CHN, Strongmodal_CHN, Uncertainty_CHN, Weakmodal_CHN, nrow=3, ncol=2)
 ```
+
+The graph yields interesting result. First, there appear to be a general trend that the Sentiments increases over time in all six categories, indicating more matches of China's words used and the dictionary. However, this could be due to a simple increase in speeches held by China, especially since the inauguration of Xi Jinping as president in 2012. 
+The cooperation, military, positive and uncertainty sentiment categories all exhibit similar patterns of time. The strong- and weak modal list is more volatile, which is however also driven my the small number of total sentiments in these lists because they comprise of few words. \newpage
 
 # Topic Modelling
 Next, I want to divide the speeches into natural groups so that we can draw conclusion from them separately. Topic modeling belongs to the subgroup of unsupervised classification of documents such as speeches in my case. This is akin to clustering numeric data where natural groups are formed even in the non-existence of them.
@@ -655,21 +669,21 @@ tidy_raw_words_CHN %>%
   cast_dtm(speech, word, n)
 ```
 
-
+I further create the dtm_review_CHN data frame which casts the word counts by speech into a DTM. I then save it in matrix form and present examplary structure of this matrix that is used for my subsequent topic analysis.
 ```{r}
 dtm_review_CHN <- tidy_raw_words_CHN %>%   #assign dtm to tidy_CHN_dataframe
   count(word, speech) %>%  
   cast_dtm(speech, word, n) |>    #Cast the word counts by speech into a DTM
     as.matrix()
 
-dtm_review_CHN[1:4, 2000:2008] #this shows output for rows 1-4 and columns 2000-2008
+dtm_review_CHN[1:4, 2001:2008] #this shows output for rows 1-4 and columns 2000-2008
 ```
-
 
 Latent Dirichlet allocation (LDA) is commonly used method for fitting topic models. LDA is based on two principles: First, each document (speech) is treated as a mixture of topics and, secondly, each topics a mixture of words. This means that each document (speech) may contain certain proportions of each topic and each word may appear in both topics. LDA estimates both of these simultaneously. Finding the combination of words that may be associated with both (or several) topics, but also finding the combination of topics that best explains each document (speech). This gives the possibility that speeches may have similar content eventually and not being treated as separate entities, which mimics the natural use of human natural language [@tidytext].
 
 ## Using Latent Dirichlet Allocation (LDA): Two-topic LDA model
-Using the LDA function fits out topic model and gives all details of the model fit like how words are associated with the speeches and how topics are associated with speeches.
+Using the LDA function fits out topic model and gives all details of the model fit like how words are associated with the speeches and how topics are associated with speeches. The method for fitting is the "Gibbs" algorithm, whose concept I will not explain here. I refer to @Gibbs.
+
 ```{r}
 library(topicmodels)
 lda_out_CHN <- LDA( 
@@ -679,10 +693,11 @@ lda_out_CHN <- LDA(
   control = list(seed = 42) 
 ) 
 
-glimpse(lda_out_CHN)
+#glimpse(lda_out_CHN)
 ```
 
 This gives a tibble of 26988 words that are assigned to two topics. $beta$ gives the word-topic probabilities.
+
 ```{r}
 lda_topics_CHN <- lda_out_CHN %>%  
  tidy(matrix = "beta") 
@@ -703,9 +718,9 @@ word_probs_CHN <- lda_topics_CHN %>%
 ```
 
 I obtain a graph that plots per topic the 15 words with the highest word probability (beta).
-For the first topic I would assign the topic model description: "problem-solving". The most common words for topic 1 are china, council, international and security. For the second topic, I suggest the topic model represents "Cooperation" with common words such as international, development, community and cooperation. However, both topics appear akin to each other as several words appear in both topics.
+For the first topic I would assign the topic model description: \textit{problem-solving}. The most common words for topic 1 are china, council, international and security. For the second topic, I suggest the topic model represents \textit{Cooperation} with common words such as international, development, community and cooperation. However, both topics appear akin to each other as several words appear in both topics.
 
-```{r}
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Two-topic LDA model.\\label{Figure11}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 # Plot term2 and the word probabilities
 ggplot(word_probs_CHN, aes(term2, beta, fill = as.factor(topic))) +
   geom_col(show.legend = F) +
@@ -731,7 +746,8 @@ beta_wide_CHN
 ```
 
 From the graph we can see that words more common in topic 2 (positive log_ratio) are such as development, peacekeeping, afghanistan and reconstruction. Topic 1 was very much shaped by the conflicts in Syria and Iraq and Sudan as the negative log ratio suggests. This confirms that the general topics are somewhat similar given the mandate of the mandate and nature of the UNSC. However, the words appear in different contexts of conflicts as the country names in each topic suggests.
-```{r}
+
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Discrepancy of word probability between Topic 1 and 2.\\label{Figure12}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 beta_wide_CHN |> 
 ggplot(aes(x = log_ratio, y = reorder(term, -log_ratio))) +
   geom_col(show.legend = FALSE) +
@@ -743,19 +759,21 @@ ggplot(aes(x = log_ratio, y = reorder(term, -log_ratio))) +
 
 ## Speech-topic probabilities
 The second part of LDA besides topics as a mixture of words was documents (speeches in this case) as a mixture of topics. This per-speech-per-topic probabilities is called gamma.
+
 ```{r}
 lda_document_CHN <- lda_out_CHN %>%  
  tidy(matrix = "gamma") 
 head(lda_document_CHN)
 ```
- The values are estimates of the share of words from a speech that are generated from the respective topic. Here the model estimates that for example 40% of the words in speech number 10 were generated from topic 1, while for speech number 2 the percentage amounts to 68. We can state that all speeches were drawn from a mix of the two topics, but to a different extent. Document 28 had the lowest $gamma$ value suggesting that it was majorily drawn from topic 2, having a γ from topic 1 closer to zero (0.17). Therefore, I tidy() the document-term matrix and check what the most common words in that document were.
+
+The values are estimates of the share of words from a speech that are generated from the respective topic. Here the model estimates that for example 40% of the words in speech number 10 were generated from topic 1, while for speech number 2 the percentage amounts to 68. We can state that all speeches were drawn from a mix of the two topics, but to a different extent. Document 28 had the lowest $gamma$ value suggesting that it was majorly drawn from topic 2, having a $gamma$ from topic 1 closer to zero (0.17). Therefore, I tidy() the document-term matrix and check what the most common words in that document were.
 
 ```{r, eval=FALSE}
 doc28 <- tidy(dtm_review_CHN) %>%
   dplyr::filter(document == 28) %>%
   arrange(desc(count))
 
-doc28  #code words but does not knit
+doc28  #code works but does not knit
 ```
 
 The words appear to be very general words most likely about efforts to restore peace and security for certain conflict, which fits well with topic 2 which I labelled as "Cooperation".
@@ -776,8 +794,8 @@ word_probs_CHN3 <- lda_topics_CHN3 %>%
   mutate(term2 = fct_reorder(term, beta))
 ```
 
-Now, we can see the results when we run three topic models...
-```{r, echo=FALSE}
+Now, we can see the results when we run three topic models by just changing the k-parameter in the LDA function. From the graph we can see that the words between the three topics appear to be similar, which suggests to stick with two topics.
+```{r, include=FALSE}
 ggplot( 
   word_probs_CHN3,  
   aes( 
@@ -794,11 +812,11 @@ ggplot(
 <p>
 |![Three-topic LDA model](Images/three topics.png) |
 |:--:|
-|<b>Figure: Three-topic LDA model</b>|
+|<b>Figure 13: Three-topic LDA model</b>|
 </p>
 
+\newpage
 # Conclusion
-
 All in all we can say that the data by @UNSC is very rich and perfectly suitable for conducting text analysis. 
 
 
@@ -808,5 +826,12 @@ All in all we can say that the data by @UNSC is very rich and perfectly suitable
 
 <div id="refs"></div>
 
-
+\newpage
 # Appendix {-}
+
+<p>
+|![Datacamp course accomplishment](Images/certificate_1.png) |
+|:--:|
+|<b>Figure: Datacamp course certificate</b>|
+</p>
+
