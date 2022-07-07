@@ -1,5 +1,5 @@
 ---
-title: "Geopolitical Changes in the UNSC -- Is China's growing global ambition reflected in its communication in the UNSC?"
+title: "The use of language in the UNSC -- Is China's growing global ambition reflected in its communication in the UNSC?"
 author: "Erik Valentin Schulte^[The project and the code is also available on: https://github.com/eriksson396/Machine-Learning-Project]"
 date: "July 7th 2022"
 bibliography: Tex/ref.bib
@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Recently, the geopolitical architecture of the world is becoming more and more challenged. Established institutions such as the United Nations (UN) and its lower-tier institutions are shaken by international disputes. One of the most apparent shifts is the ever-growing importance of China in the international arena. This shift in power weights is also reflected in China's international demeanour, diplomacy and communication. The term "wolf warrior diplomacy" [@wolfs] became a widespread synonym for this China's growing confidence and aggressive representation of its policy objectives. Its claims in the congested and strategically important South China Sea is one of the areas, where the country's interests are represented vividly. \newline
 Therefore, it would be interesting if this development and shifts in policy objectives can also be observed in China's official communication in the current international institutions. China is a permanent member of the United Nations Security Council (UNSC) and the importance of this body, makes it an interesting case to study. The data by @UNSC is an ideal match for my study purposes. My first hypothesis is that China's use of language became more demanding and direct given in light of the wolf warrior diplomacy. \newline
-Based on the theory of China's potential shift in policy objectives in the UNSC, I now conduct the empirical evaluation. For this purpose, I ﬁrst describe the data preparation process. Secondly, I conduct the actual computer-assisted text analysis which presents several measures and examines the hypothesis. 
+Based on the theory of China's potential shift in policy objectives in the UNSC, I now conduct the empirical evaluation. For this purpose, I ﬁrst describe the data preparation process. Secondly, I conduct the actual computer-assisted text analysis which presents several measures and examines the hypothesis.^[My analysis generally following the great resources of @tidytext and @datacamp.]
 
 # Link between Machine Learning and Text Analysis
 
@@ -73,8 +73,10 @@ corp_meta_speeches <- corpus(meta_speeches, text_field = "text")
 summary(corp_meta_speeches, 1)
 corp_meta_speeches <- corpus_subset(corp_meta_speeches, participanttype != "The President")
 ```
+
 The summary shows one example of how one observation of the corpus looks like. It has 22 variables and exhibits information on the topics of the speech, speech length, speaker and the link to the speech itself among other variables. I suggest the code book of @UNSC for the exact variable descriptions. \newline
 I also create a unique corpus just for the speeches held by China. I do this using the corpus_subset command from my previously defined corpus. I also take a subset of the meta_speeches data frame with only the speeches from China. In total there are 3564 speeches by China in the data frame, a total share of 3.82% of all speeches. So there appear to be 1619 speeches from China as participant type president. So, the speeches where China speaks on behalf of the president are excluded.
+
 ```{r}
 #How do I assign the speeches to the columns (now the speeches are in the same order as in the document, but not tied to the countries)
 
@@ -96,8 +98,10 @@ head(docvars(corp_China))
 #corp_China$avg_speech_length <- (mean(corp_China$sentences))
 #avg_speech_length
 ```
+
 We an see the meta data of the China corpus inclusing the names of the speakers, the reference to the speech data file, the topic etc., as described above.
 As a next step, I separate the whole speeches into sentences in tidy format. One column for every sentence of a speech. For that I use the unnest_tokens function from the tidytext package. This lets the the number of observations grow to 1,767,696 million. The problem here is that now after every salutation like "Mr.", so after every point the function creates a new sentence. When we create a data frame for every word as an observation, the number of observation grows to 43,534,652 million. Therefore, we must clean the data further before using them for analysis.
+
 ```{r}
 ##separates by default into words all speeches from raw docs (here by sentences) variable after tokens
 tidy_raw_sentences <- meta_speeches %>%
@@ -189,6 +193,7 @@ tidy_raw_words_CHN <- tidy_raw_words_CHN %>%
 tidy_raw_words_CHN %>%
   count(word, sort = TRUE)
 ```
+
 We can see that China's five most commonly used words are the same as for the UNSC, except that its country name is the most used words. This is not surprising as country's commonly hold speeches referring to them with their country name. Note that most Chinese speeches were held in Chinese and that the speech data here were translated into English. These respective speeches have a note in brackets "(interpretation from chinese") that I did not remove from the text data.
 
 ```{r, echo=FALSE, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Most common words used by China.\\label{Figure3}", fig.ext = 'png', fig.height = 5, fig.width = 7}
@@ -226,7 +231,7 @@ wordcloud(
 )
 ```
 
-Next, we want to get further than just plotting the most frequently used words. One of the big issuesin text mining and natural language processing is the question how to quantify what a document is about. One approach provides a measure of how important a word may be. This approach is called term frequency (tf) --  how frequently a word occurs in a document. \newpage
+Next, we want to get further than just plotting the most frequently used words. One of the big issuesin text mining and natural language processing is the question how to quantify what a document is about. One approach provides a measure of how important a word may be. This approach is called term frequency (tf) -- how frequently a word occurs in a document. \newpage
 
 # Frequency terms
 Next, I calculate frequency terms. The function get_freqs creates a list of the frequency of terms that appear in each speech. The function takes the respective corpus as an input and returns the frequencies in the form of a data frame. In the ﬁrst step, it creates tokens from the text documents. Tokens are a sequence of elementary lexical components, in our case words. Punctuation, separators and stop words like “he”, “do”, or “if” are excluded as they have no meaning for the content and therefore represent no real added value for the analysis. \newline
@@ -350,7 +355,7 @@ freq_by_rank_CHN %>%
 The result akins the classic version of Zipf’s law for the corpus of China's UNSC speeches. The deviations at the high rank are not uncommon in human language. Usually, a language corpus does contain fewer rare words than any single power law would predict. Nevertheless, the deviations at low rank are more unusual compared to the deviations from the fitted line at high rank. China uses a lower percentage of uncommon words than many collections of language, which may indicate the complexity of the diplomatic language [see @diplo].
 
 ## The bind_tf_idf() function
-The intuition of tf-idf is to identify crucial words for the speech by decreasing the weight for the most commonly used words and doing the reverse for less frequent words in the collection of speeches -- the speeches by China in the UNSC. tf-idf attempts wants to find the important words that are common in a text, but not too common.
+The intuition of tf-idf is to identify crucial words for the speech by decreasing the weight for the most commonly used words and doing the reverse for less frequent words in the collection of speeches -- the speeches by China in the UNSC. tf-idf attempts wants to find the important words that are common in a text, but not too common [@tidytext].
  
 The bind_tf_idf() function in the tidytext package takes a tidy text data set as input. One column (word here) contains the terms/tokens, one the documents (speech in this case), and the last necessary column contais the information how many times each speech contains each term (n in this example). I create a new data frame for this, as the bind_tf_idf function requires a document entry (speeches in my case). 
  
@@ -968,7 +973,6 @@ I then proceeded with the sentiment analysis by conducting a dictionary-based ap
 I then continued to study relationships between words which are called bigrams. One insight here was the common bigram "middle east", suggesting this being a frequent object of discussion in China's speeches in the UNSC. Visualizing the most frequent bigrams without stop words in \autoref[Figure11] confirmed one fundamental principle of Chinese foreign policy [@Li] by revealing the common bigram "territorial integrity". \newline
 Topic modelling suggested that for the underlying text data two topics are sufficiently given the similar use of words in the UNSC. I plotted the probability of a word occurring under a specific topic and based on the words obtained I named the two topics in a subjective manner -- problem-solving and cooperation. We then saw that the problem solving topic was shaped by debates on the conflicts in Syria, Iraq and Sudan, while the Cooperation topic was shaped by words like development, peacekeeping and Afghanistan. \newline
 All in all, quantitative text analysis using machine learning algorithms is a powerful tool to draw conclusions from large amounts of text data in many contexts. For sentiment analysis, it is very important to know the specific context in order to use the right dictionaries -- a concern that I argue was successfully alleviated with my approach. This analysis was general in nature, and can only give a partial answer to the research question. Generally, speaking China's use of language does not seem to substantially deviate from the common use of language in the UNSC. However, only small parts of the available data from @UNSC were used. There, is much more room for research and drawing interesting conclusions from this unique data set that is easy to convert into a tidy format.
-
 
 \newpage
 
