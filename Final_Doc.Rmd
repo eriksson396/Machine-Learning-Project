@@ -178,8 +178,8 @@ tidy_raw_sentences_CHN <- Chinaspeeches %>%
 
 #How do I assign the speeches to the columns (now the speeches are in the same order as in the document, but not tied to the countries)
 
-##separate into words
-tidy_raw_words_CHN <- Chinaspeeches |> 
+#separate into words
+tidy_raw_words_CHN <- Chinaspeeches |>
     unnest_tokens(word, text)
 
 ##remove redundant words (reduces to 600k thousand words)
@@ -192,7 +192,7 @@ tidy_raw_words_CHN <- tidy_raw_words_CHN %>%
 tidy_raw_words_CHN %>%
   count(word, sort = TRUE)
 ```
-We can see that China's five most commonly used words are the same as for the UNSC, except that its country name is the most used words. This is not surprising as country's commonly hold speeches referring to them with their country name.
+We can see that China's five most commonly used words are the same as for the UNSC, except that its country name is the most used words. This is not surprising as country's commonly hold speeches referring to them with their country name. Note that most Chinese speeches were held in Chinese and that the speech data here were translated into English. These respective speeches have a note in brackets "(interpretation from chinese") that I did not remove from the text data.
 
 ```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Most common words used by China.\\label{Figure3}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 ##plotting most common words
@@ -334,7 +334,6 @@ $\text{frequency} \propto \frac{1}{\text{rank}}$
 
 The r-th most frequent word has a frequency that scales according to the above formula. The frequency rank is the r-th most frequent words and frequency is the frequency of a word in a natural corpus (speech in our case). 
 
-
 ```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Fitted exponent for Zipf's law for Chinese speeches.\\label{Figure7}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 freq_by_rank_CHN %>% 
   ggplot(aes(rank, `term frequency`)) + 
@@ -355,7 +354,7 @@ The idea of tf-idf is to find the important words for the content of each docume
 The bind_tf_idf() function in the tidytext package takes a tidy text data set as input. One column (word here) contains the terms/tokens, one column contains the documents (speech in this case), and the last necessary column contains the counts, how many times each speech contains each term (n in this example). I create a new data frame for this, as the bind_tf_idf function requires a document entry (speeches in my case). 
  
 ```{r}
-CHN_tf_idf <- speech_words_CHN_per_speech %>%  #89955 variables...
+CHN_tf_idf <- speech_words_CHN_per_speech %>%  #86955 variables...
   bind_tf_idf(word, speech, n)
 
 head(CHN_tf_idf)
@@ -363,10 +362,11 @@ head(CHN_tf_idf)
 
 The idf and thus tf-idf are zero for these most common words (China). Unsurprisingly, the word China appears very often in the speeches of China, so the idf-term (which will then be the natural log of 1) is zero. The inverse document frequency (and thus tf-idf) is close to zero for words that occur in many of the speeches in a collection. This is, in fact, the procedure how this approach decreases the weight for common words. The inverse document frequency will be a higher number for words that occur in fewer speeches.
  
-```{r, echo=FALSE, results='hide', message=FALSE}
-CHN_tf_idf %>%
+```{r, message=FALSE}
+important_words_speech <- CHN_tf_idf %>%
   select(-total) %>%
   arrange(desc(tf_idf))
+head(important_words_speech)
 ```
 
 Here we see important words that are in fact important in these respective speeches. None of them occurs in all of speeches. But they are important, characteristic words for each speech within the corpus of the UNSC speeches by China. We can see that one speech (speech 129) most likely talked about the still ongoing territorial disputes in the South China Sea, as nansha, islands, and sea were important words in that speech.
@@ -416,7 +416,7 @@ dict <- GI_dic |>
     select(military, powercoop)  
 ```
 
-The second dictionary I am using is the one by @Loughran. From this I append the wordlists "Positive, "Uncertainty", "Strongmodal" and "Weakmodal" to my dictionary.
+The second dictionary I am using is the one by @Loughran. From this I append the word lists "Positive, "Uncertainty", "Strongmodal" and "Weakmodal" to my dictionary.
 
 ```{r}
 loughran <- read_excel("~/ownCloud/Uni Göttingen/Stellenbosch University/Data Science Methods/Github Projects/Machine Learning Project/data/LoughranMcDonald_SentimentWordLists_2018.xlsx")
@@ -489,6 +489,7 @@ words_per_sentiment <- tidy_dict |>
 ```
 
 Next, present my dictionary also graphically in \ref{Figure8}. By far most of my sentiment indicating words are in the "positive" and "uncertainty" category. 
+
 ```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Sentiment Counts per sentiment in my dictionary.\\label{Figure8}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 
 sentiment_counts <- tidy_dict %>%  
@@ -663,12 +664,13 @@ I use the function to tokenize into consecutive sequences of words, called n-gra
  
 ```{r}
 bigram_CHN <- Chinaspeeches |> 
+    mutate( speech = Chinaspeeches$speech) |> 
   unnest_tokens(bigram, text, token = "ngrams", n = 2)
 
 #head(bigram_CHN)
 ```
 
-The data structure is now not a pure tidy format anymore, but it still has one row per token, in a sense that each token comprises two words. We can still use the tools for tidy data. Similary to single, tokens before we can count the most common bigrams.
+The data structure is now not a pure tidy format anymore, but it still has one row per token, in a sense that each token comprises two words. We can still use the tools for tidy data. Similary to single, tokens before we can count the most common bigrams. The data frame is rather long now, because the bigrams overlap: "Xuexan china" and "china interpretation" are respective bigrams. 
 
 ```{r}
 bigram_CHN <- bigram_CHN |> 
@@ -678,7 +680,7 @@ head(bigram_CHN)
 
 We can see that by far the most common bigram is "of the", occurring 17766 times followed by other meaningless common words. These are stop-words that we want to remove. I use tidyr’s separate(), which splits a column into multiple based on a delimiter. This lets us separate it into two columns, “word1” and “word2”, at which point we can remove cases where either is a stop-word.
 
-```{r, message=FALSE,}
+```{r, message=FALSE}
 bigrams_separated_CHN <- bigram_CHN %>%
   separate(bigram, c("word1", "word2"), sep = " ")
 
@@ -715,27 +717,9 @@ trigrams_CHN <- Chinaspeeches %>%
 head(trigrams_CHN)
 ```
 
-The most common trigrams are united nations peacekeeping, security council resolutions, and trigams containing the name haitao, the name of the Chinese ambassafor Wu Haitao to the UN.
+The most common trigrams are united nations peacekeeping, security council resolutions, and trigams containing the name haitao, the name of the Chinese ambassador Wu Haitao to the UN.
 
-## Analyzing bigrams
-
-```{r, include=FALSE}
-bigrams_filtered_CHN %>%
-  filter(word2 == "street") %>%
-  count(speech, word1, sort = TRUE)
-```
-
-```{r, include=FALSE}
-bigram_tf_idf_CHN <- bigrams_united_CHN %>%
-  count(bigram) %>%
-  bind_tf_idf(bigram, n) %>%
-  arrange(desc(tf_idf))
-
-bigram_tf_idf_CHN
-```
-
-
-## Getting more contextin sentiment analysis
+## Getting more context in sentiment analysis
 
 So far, the sentiment analysis approach counted the appearance of words in my six dictionaries, according to my dictionary. One of the problems with this approach is that a word’s context is neglected. For example, the words “happy” and “like” will be counted as positive, even in a sentence like “I’m not happy and I don’t like it!”
 
@@ -749,6 +733,73 @@ no_not <- bigrams_separated_CHN %>%
 head(no_not)
 ```
 
+Most frequently, not is followed by "only" and "be". We can also analyse the most frequent words that were preceded by “not” and were associated with a sentiment from the dictionary.
+
+```{r}
+not_words_CHN <- bigrams_separated_CHN %>%
+  filter(word1 == "not") %>%
+  inner_join(tidy_dict, by = c(word2 = "word")) %>%
+  count(word2, Sentiment)
+head(not_words_CHN)
+```
+
+For some reason only 35 words appear to have been preceded by "not", and all words just a single time which seems unrealistic.
+
+## Visualize network of bigrams
+As one common visualization, we can arrange the words into a network, or “graph.”  A “graph” in this context does not refer to a sense of a visualization, but a combination of connected nodes. A graph can be constructed from a tidy object.
+One way to create an igraph object from tidy data is the graph_from_data_frame() function, which takes a data frame of edges with columns for “from”, “to”, and edge attributes (in this case n). "From" refers to the node an edge is stemming from, "to" is the node an edge going towards and the "weight" is a numeric value associated with each edge.
+
+```{r, message=FALSE}
+library(igraph)
+# filter for only relatively common combinations
+bigram_graph_CHN <- bigrams_filtered_CHN %>%
+  filter(n > 200) %>%
+  graph_from_data_frame()
+```
+
+For visualizing the igraph object, I use the ggraph package as @tidytext suggest. We need to add layers to that graph similar as in ggplot, for a basic graph we need to add three layers: nodes, edges, and text.
+
+```{r, include = F}
+library(ggraph)
+set.seed(2017)
+
+ggraph(bigram_graph_CHN, layout = "fr") +
+  geom_edge_link() +
+  geom_node_point() +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1)
+```
+
+\autoref{Figure11} visualizes some of the text structure. We can see that for example "territorial integrity" is common which confirms China's strong emphasis in its foreign policy in non-interference in domestic issues. Other common bigrams are those that are phrases that belong together such as "capacity building", "chemical weapons" or "general's secretary". Other bigrams refer to countries such as "sierra leone", "timor leste" or "south sudan".
+
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Common bigrams with more than 200 occurences without any stopwords.\\label{Figure11}", fig.ext = 'png', fig.height = 5, fig.width = 7}
+set.seed(2020)
+
+a <- grid::arrow(type = "closed", length = unit(.15, "inches"))
+
+ggraph(bigram_graph_CHN, layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n), show.legend = FALSE,
+                 arrow = a, end_cap = circle(.07, 'inches')) +
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
+  theme_void()
+```
+
+More transparent links are more rare. Directionality of a bigram is indicated by arrows.
+
+# Counting and Correlating pairs among speeches with widyr package
+
+For this part we can use our speech_words_CHN_per_speech data frame again, which displays the words in each speech and the number of times used. I then use One useful the pairwise_count() function from the widyr package. Eventually, we should have one row for each pairing of words in the word variable. Hence, we can count common pairs of words co-appearing within the same speech.
+
+```{r}
+library(widyr)
+# count words co-occuring within sections
+word_pairs <- speech_words_CHN_per_speech %>%
+  pairwise_count(word, speech, sort = TRUE)
+
+head(word_pairs)
+```
+
+We can see that the new tibble is extremely long, because it has one row for each pair of words and not only for each pair of document (speech). It has 91,152,976 million rows. we can see that the nine most common words pairs in speeches include "China" or "chinese". This is not surprising since china is also one of the most common individual words. We may instead want to examine correlation among words, which indicates how often they appear together relative to how often they appear separately.
 
 \newpage
 
@@ -814,7 +865,7 @@ word_probs_CHN <- lda_topics_CHN %>%
 I obtain a graph that plots per topic the 15 words with the highest word probability (beta).
 For the first topic I would assign the topic model description: \textit{problem-solving}. The most common words for topic 1 are china, council, international and security. For the second topic, I suggest the topic model represents \textit{Cooperation} with common words such as international, development, community and cooperation. However, both topics appear akin to each other as several words appear in both topics.
 
-```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Two-topic LDA model.\\label{Figure11}", fig.ext = 'png', fig.height = 5, fig.width = 7}
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Two-topic LDA model.\\label{Figure12}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 # Plot term2 and the word probabilities
 ggplot(word_probs_CHN, aes(term2, beta, fill = as.factor(topic))) +
   geom_col(show.legend = F) +
@@ -841,7 +892,7 @@ beta_wide_CHN
 
 From the graph we can see that words more common in topic 2 (positive log_ratio) are such as development, peacekeeping, afghanistan and reconstruction. Topic 1 was very much shaped by the conflicts in Syria and Iraq and Sudan as the negative log ratio suggests. This confirms that the general topics are somewhat similar given the mandate of the mandate and nature of the UNSC. However, the words appear in different contexts of conflicts as the country names in each topic suggests.
 
-```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Discrepancy of word probability between Topic 1 and 2.\\label{Figure12}", fig.ext = 'png', fig.height = 5, fig.width = 7}
+```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Discrepancy of word probability between Topic 1 and 2.\\label{Figure13}", fig.ext = 'png', fig.height = 5, fig.width = 7}
 beta_wide_CHN |> 
 ggplot(aes(x = log_ratio, y = reorder(term, -log_ratio))) +
   geom_col(show.legend = FALSE) +
@@ -889,6 +940,7 @@ word_probs_CHN3 <- lda_topics_CHN3 %>%
 ```
 
 Now, we can see the results when we run three topic models by just changing the k-parameter in the LDA function. From the graph we can see that the words between the three topics appear to be similar, which suggests to stick with two topics.
+
 ```{r, include=FALSE}
 ggplot( 
   word_probs_CHN3,  
@@ -906,7 +958,7 @@ ggplot(
 <p>
 |![Three-topic LDA model](Images/three topics.png) |
 |:--:|
-|<b>Figure 13: Three-topic LDA model</b>|
+|<b>Figure 14: Three-topic LDA model</b>|
 </p>
 
 \newpage

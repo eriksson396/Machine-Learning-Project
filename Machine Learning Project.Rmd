@@ -96,6 +96,72 @@ Chinaspeeches <- subset.data.frame(corpus, country == "China") #only the speeche
 
 
 
+```{r}
+set.seed(1234)
+word_pairs %>%
+  filter(n >= 30) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n, edge_width = n), edge_colour = "darkred") +
+  geom_node_point(size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE,
+                 point.padding = unit(0.2, "lines")) +
+  theme_void()
+```
+
+
+```{r, include=FALSE, results='hide'}
+speech_words_CHN_per_speech$speech <- as.integer(speech_words_CHN_per_speech$speech)
+speech_words_CHN_per_speech <- as_tibble(speech_words_CHN_per_speech)
+
+# we need to filter for at least relatively common words first
+word_cors <- speech_words_CHN_per_speech %>%
+  #as.character(speech_words_CHN_per_speech$speech) |> 
+  #  as.factor(speech_words_CHN_per_speech$word) |> 
+  group_by(word) %>%
+  filter(n() >= 1000) %>%
+  pairwise_cor(word, speech, sort = TRUE)
+
+head(word_cors)
+
+str(speech_words_CHN_per_speech)
+#In particular, here we’ll focus on the phi coefficient, a common measure for binary correlation. The focus of the phi coefficient is how much more likely it is that either both word X and Y appear, or neither do, than that one appears without the other @tidytext. The phi coefficient is equivalent to the Pearson correlation. The pairwise_cor() function in widyr lets us find the phi coefficient between words based on how often they appear in the same speech.
+```
+
+
+This output format is helpful for exploration. Again this data frame, is extremly long somehow with more than 182 million rows and many word with a correlation of infinity and also negative values which does not make sense. For example, we could find the words most correlated with a word like “africa” using a filter operation.
+
+```{r, include=FALSE, results='hide'}
+word_cors %>%
+  filter(item1 == "africa")
+```
+
+I then pick some particularly interesting words and check which words are most associated with them.
+```{r, include=FALSE, results='hide'}
+word_cors %>%
+  filter(item1 %in% c("america", "europe", "africa")) %>%
+  group_by(item1) %>%
+  slice_max(correlation, n = 6) %>%
+  ungroup() %>%
+  mutate(item2 = reorder(item2, correlation)) %>%
+  ggplot(aes(item2, correlation)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ item1, scales = "free") +
+  coord_flip()
+```
+
+```{r, include=FALSE, results='hide'}
+set.seed(2016)
+
+word_cors %>%
+  filter(correlation == 1) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = correlation), show.legend = FALSE) +
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
+```
 
 # Data  {-}
 First of all, I present all relevant data sources and explain essential features to get a

@@ -22,7 +22,9 @@ The data of the speeches of the @UNSC data are unstructured. Quantitative text a
 My paper will solely focus on unsupervised machine learning methods that are applied from [@tidytext \& @datacamp]. In general, quantitative text analysis is covered in parts of ML and Natural Language Processing (NLP). I will cover text mining techniques such as word frequency, text classification such as sentiment analysis and topic modelling. Important challenges to apply ML to text is the complexity of the analysis the conceptual difficulties (e.g. humour/sarcasm in human language) and taking into account cultural norms of communication [@textML]. For further reading on the link between text mining and ML, I refer to @ML2019.
 
 # Data  {-}
-First of all, I present all relevant data sources and explain essential features to get a proper overview. Afterwards, I explain the process of loading the data into R and how we process the raw text corpus, to obtain meaningful results.\newline
+First of all, I present all relevant data sources and explain essential features to get a
+proper overview. Afterwards, I explain the process of loading the data into R and how
+we process the raw text corpus, to obtain meaningful results.\newline
 For the empirical analysis we use three main data sources. The main data set comprises UN Security Council debates between January 1995 and December 2020 and was downloaded from @UNSC. The official meeting protocols are split into distinct speeches. For every speech, metadata regarding the speaker, the speaker's nation or affiliation, and the speaker's role in the meeting is given. The topic of the meeting is also given. In total, the corpus contains 82,165 speeches extracted from 5,748 meeting protocols. The download file of @UNSC also provides a code book with the exact description of their workflow how to set-up the database as well as a detailed variable description.
 \newline
 The data are split in to a file containing all information about the UNSC meetings, one file about the metadata of the speeches and one file containing the whole text of the speeches.
@@ -146,7 +148,6 @@ scale_x_continuous(labels = comma_format(big.mark = ".",
  
  most_common_words_UNSC
 ```
-
 I also plot the exact same information of the 40 most common words from the UNSC in a visually appealing wordcloud using the wordcloud package.
 
 ```{r, message=FALSE, warning =  FALSE, fig.align = 'center', fig.cap = "Wordcloud of most common words in UNSC.\\label{Figure2}", fig.ext = 'png', fig.height = 5, fig.width = 7}
@@ -657,6 +658,8 @@ CHN_sentiment_development <- grid.arrange(Cooperation_CHN, Military_CHN, Positiv
 The graph yields interesting result. First, there appear to be a general trend that the Sentiments increases over time in all six categories, indicating more matches of China's words used and the dictionary. However, this could be due to a simple increase in speeches held by China, especially since the inauguration of Xi Jinping as president in 2012. 
 The cooperation, military, positive and uncertainty sentiment categories all exhibit similar patterns of time. The strong- and weak modal list is more volatile, which is however also driven my the small number of total sentiments in these lists because they comprise of few words.
 
+
+
 # Relationships between words
 I will now explore some of the methods tidytext offers for calculating and visualizing relationships between words in the speeches. This includes the token = "ngrams" argument, which tokenizes by pairs of adjacent words rather than by single words as I did for the tidy_raw_words_CHN data frame.
 I use the function to tokenize into consecutive sequences of words, called n-grams. By seeing how often word X is followed by word Y, we can then build a model of the relationships between them. Note here that Chinaspeeches is not cleaned from the stopwords list, this is also applied in @tidytext.
@@ -678,7 +681,7 @@ head(bigram_CHN)
 
 We can see that by far the most common bigram is "of the", occurring 17766 times followed by other meaningless common words. These are stop-words that we want to remove. I use tidyr’s separate(), which splits a column into multiple based on a delimiter. This lets us separate it into two columns, “word1” and “word2”, at which point we can remove cases where either is a stop-word.
 
-```{r, message=FALSE,}
+```{r, message=FALSE}
 bigrams_separated_CHN <- bigram_CHN %>%
   separate(bigram, c("word1", "word2"), sep = " ")
 
@@ -688,65 +691,32 @@ bigrams_filtered_CHN <- bigrams_separated_CHN %>%
 
 # new bigram counts:
 bigram_counts_CHN <- bigrams_filtered_CHN %>% 
-  count(word1, word2, sort = TRUE) 
+  count(word1, word2, sort = TRUE)
+
+head(bigram_counts_CHN)
 ```
 
-Next, I want to recombine the words of the bigrams. tidyr’s unite() function is the inverse of separate(), and lets us merge the words into one column again. Thus, we may find the most common bigrams not containing stop-words.
+From the output we can see that (unsurprisingly) the most common bigram is "united nations", appearing 5478 times. More meaningful is the bigram "middle east", which suggests that conflicts in the middle east were often on the agenda when "china spoke" (1677 times) in the UNSC.
 
+Next, I want to recombine the words of the bigrams. tidyr’s unite() function is the inverse of separate(), and lets us merge the words into one column again. Thus, we may find the most common bigrams not containing stop-words.
 ```{r}
 bigrams_united_CHN <- bigrams_filtered_CHN %>%
   unite(bigram, word1, word2, sep = " ")
 
 head(bigrams_united_CHN$bigram)
 ```
+These include "united nations"
 
-From the output we can see that (unsurprisingly) the most common bigram is "united nations", appearing 5478 times. More meaningful is the bigram "middle east", which suggests that conflicts in the middle east were often on the agenda when "china spoke" (1677 times) in the UNSC.
 
 ## Trigrams
 ```{r}
-trigrams_CHN <- Chinaspeeches %>%
+Chinaspeeches %>%
   unnest_tokens(trigram, text, token = "ngrams", n = 3) %>%
   separate(trigram, c("word1", "word2", "word3"), sep = " ") %>%
   filter(!word1 %in% stop_words$word,
          !word2 %in% stop_words$word,
          !word3 %in% stop_words$word) %>%
   count(word1, word2, word3, sort = TRUE)
-
-head(trigrams_CHN)
-```
-
-The most common trigrams are united nations peacekeeping, security council resolutions, and trigams containing the name haitao, the name of the Chinese ambassafor Wu Haitao to the UN.
-
-## Analyzing bigrams
-
-```{r, include=FALSE}
-bigrams_filtered_CHN %>%
-  filter(word2 == "street") %>%
-  count(speech, word1, sort = TRUE)
-```
-
-```{r, include=FALSE}
-bigram_tf_idf_CHN <- bigrams_united_CHN %>%
-  count(bigram) %>%
-  bind_tf_idf(bigram, n) %>%
-  arrange(desc(tf_idf))
-
-bigram_tf_idf_CHN
-```
-
-
-## Getting more contextin sentiment analysis
-
-So far, the sentiment analysis approach counted the appearance of words in my six dictionaries, according to my dictionary. One of the problems with this approach is that a word’s context is neglected. For example, the words “happy” and “like” will be counted as positive, even in a sentence like “I’m not happy and I don’t like it!”
-
-Having the text data organized in bigrams, allows to count how often our sentiment-associated words are preceded by a word like “not” and other negating words: We could use this to ignore or even reverse their contribution to the sentiment score.
-
-```{r}
-no_not <- bigrams_separated_CHN %>%
-  filter(word1 == "not") %>%
- # count(word1, word2) |> 
-    arrange(desc(n))
-head(no_not)
 ```
 
 
